@@ -1,3 +1,4 @@
+```python
 import os
 import json
 from datetime import datetime, timezone, timedelta
@@ -9,6 +10,8 @@ TWITCH_CLIENT_ID = os.environ["TWITCH_CLIENT_ID"]
 TWITCH_CLIENT_SECRET = os.environ["TWITCH_CLIENT_SECRET"]
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 DISCORD_WEBHOOK_URL = os.environ["DISCORD_WEBHOOK_URL"]
+BUFFER_API_KEY = os.environ["BUFFER_API_KEY"]
+
 BUFFER_CHANNEL_ID = "6a987c1f065799be4676bb2a"
 
 CHANNEL_NAME = "oilrats"
@@ -209,7 +212,6 @@ def send_to_buffer(message):
     print("✅ Message sent to X via Buffer.")
 
 
-
 def main():
     print(f"Checking Twitch channel: {CHANNEL_NAME}")
 
@@ -250,24 +252,25 @@ def main():
     print("==========================")
     print("")
 
-   print("📢 Sending message to Discord...")
-    
-   send_to_discord(message)
-    
-   print("✅ Message sent to Discord.")
-    
-   print("🐦 Sending message to X via Buffer...")
-    
-   send_to_buffer(message)
-    
-   print("✅ Message sent to X.")
-    
-   twitch_state["last_processed"] = datetime.now(timezone.utc).isoformat()
+    print("📢 Sending message to Discord...")
 
-   save_state(state)
+    send_to_discord(message)
 
-   print("✅ Processing timestamp saved.")
+    print("✅ Message sent to Discord.")
+
+    print("🐦 Sending message to X via Buffer...")
+
+    send_to_buffer(message)
+
+    print("✅ Message sent to X.")
+
+    twitch_state["last_processed"] = datetime.now(timezone.utc).isoformat()
+
+    save_state(state)
+
+    print("✅ Processing timestamp saved.")
 
 
 if __name__ == "__main__":
     main()
+```
