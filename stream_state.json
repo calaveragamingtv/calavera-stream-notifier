@@ -1,3 +1,8 @@
 {
-  "last_processed": "2026-10-05T02:40:38.988712+00:00"
+  "twitch": {
+    "last_processed": null
+  },
+  "kick": {
+    "last_processed": null
+  }
 }
