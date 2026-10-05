@@ -7,11 +7,14 @@ import requests
 
 TWITCH_CLIENT_ID = os.environ["TWITCH_CLIENT_ID"]
 TWITCH_CLIENT_SECRET = os.environ["TWITCH_CLIENT_SECRET"]
+GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 
-CHANNEL_NAME = "CalaveraGamingTV"
+CHANNEL_NAME = "iRiskpvp"
 
 STATE_FILE = "stream_state.json"
 COOLDOWN_HOURS = 14
+
+GEMINI_MODEL = "gemini-3.5-flash-lite"
 
 
 def get_twitch_token():
@@ -83,6 +86,59 @@ def should_process(state):
     return elapsed >= timedelta(hours=COOLDOWN_HOURS)
 
 
+def generate_with_gemini(stream):
+    prompt = f"""
+Sos el community manager de un streamer de Rust llamado CalaveraGamingTV.
+
+El streamer acaba de comenzar un directo en Twitch.
+
+Datos del directo:
+- Canal: {CHANNEL_NAME}
+- Título: {stream["title"]}
+- Juego: Rust
+- Espectadores actuales: {stream["viewer_count"]}
+
+Generá un mensaje corto y atractivo para anunciar el directo.
+
+Reglas:
+- Escribí en español.
+- Tono gamer, directo y natural.
+- No inventes información.
+- No seas demasiado formal.
+- Usá como máximo 2 emojis.
+- El mensaje debe invitar a entrar al directo.
+- Incluí el enlace: https://twitch.tv/{CHANNEL_NAME}
+
+Devolvé solamente el mensaje final, sin explicaciones.
+"""
+
+    response = requests.post(
+        f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
+        headers={
+            "x-goog-api-key": GEMINI_API_KEY,
+            "Content-Type": "application/json",
+        },
+        json={
+            "contents": [
+                {
+                    "parts": [
+                        {
+                            "text": prompt
+                        }
+                    ]
+                }
+            ]
+        },
+        timeout=60,
+    )
+
+    response.raise_for_status()
+
+    data = response.json()
+
+    return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+
+
 def main():
     print(f"Checking Twitch channel: {CHANNEL_NAME}")
 
@@ -106,8 +162,15 @@ def main():
 
     print("🚀 14 hours passed. Processing stream...")
 
-    # Por ahora solamente registramos el procesamiento.
-    # Después acá vamos a llamar a Gemini.
+    print("🤖 Sending stream information to Gemini...")
+
+    message = generate_with_gemini(stream)
+
+    print("")
+    print("===== GEMINI MESSAGE =====")
+    print(message)
+    print("==========================")
+    print("")
 
     state["last_processed"] = datetime.now(timezone.utc).isoformat()
 
