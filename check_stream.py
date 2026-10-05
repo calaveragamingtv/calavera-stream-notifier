@@ -8,7 +8,7 @@ import requests
 TWITCH_CLIENT_ID = os.environ["TWITCH_CLIENT_ID"]
 TWITCH_CLIENT_SECRET = os.environ["TWITCH_CLIENT_SECRET"]
 
-CHANNEL_NAME = "CalaveraGamingTV"
+CHANNEL_NAME = "iRiskpvp"
 
 STATE_FILE = "stream_state.json"
 COOLDOWN_HOURS = 14
