@@ -8,8 +8,9 @@ import requests
 TWITCH_CLIENT_ID = os.environ["TWITCH_CLIENT_ID"]
 TWITCH_CLIENT_SECRET = os.environ["TWITCH_CLIENT_SECRET"]
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
+DISCORD_WEBHOOK_URL = os.environ["DISCORD_WEBHOOK_URL"]
 
-CHANNEL_NAME = "iRiskpvp"
+CHANNEL_NAME = "CalaveraGamingTV"
 
 STATE_FILE = "stream_state.json"
 COOLDOWN_HOURS = 14
@@ -142,6 +143,18 @@ Devolvé solamente el mensaje final, sin explicaciones.
     return data["candidates"][0]["content"]["parts"][0]["text"].strip()
 
 
+def send_to_discord(message):
+    response = requests.post(
+        DISCORD_WEBHOOK_URL,
+        json={
+            "content": message
+        },
+        timeout=30,
+    )
+
+    response.raise_for_status()
+
+
 def main():
     print(f"Checking Twitch channel: {CHANNEL_NAME}")
 
@@ -171,6 +184,7 @@ def main():
         return
 
     print("🚀 14 hours passed. Processing stream...")
+
     print("🤖 Sending stream information to Gemini...")
 
     message = generate_with_gemini(stream)
@@ -180,6 +194,12 @@ def main():
     print(message)
     print("==========================")
     print("")
+
+    print("📢 Sending message to Discord...")
+
+    send_to_discord(message)
+
+    print("✅ Message sent to Discord.")
 
     twitch_state["last_processed"] = datetime.now(timezone.utc).isoformat()
 
