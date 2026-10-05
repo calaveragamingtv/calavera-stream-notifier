@@ -1,10 +1,17 @@
 import os
+import json
+from datetime import datetime, timezone, timedelta
+
 import requests
+
 
 TWITCH_CLIENT_ID = os.environ["TWITCH_CLIENT_ID"]
 TWITCH_CLIENT_SECRET = os.environ["TWITCH_CLIENT_SECRET"]
 
 CHANNEL_NAME = "CalaveraGamingTV"
+
+STATE_FILE = "stream_state.json"
+COOLDOWN_HOURS = 14
 
 
 def get_twitch_token():
@@ -45,6 +52,37 @@ def get_stream_info(token):
     return data[0]
 
 
+def load_state():
+    if not os.path.exists(STATE_FILE):
+        return {
+            "last_processed": None
+        }
+
+    with open(STATE_FILE, "r", encoding="utf-8") as file:
+        return json.load(file)
+
+
+def save_state(state):
+    with open(STATE_FILE, "w", encoding="utf-8") as file:
+        json.dump(state, file, indent=2)
+
+
+def should_process(state):
+    last_processed = state.get("last_processed")
+
+    if last_processed is None:
+        return True
+
+    last_time = datetime.fromisoformat(last_processed)
+    now = datetime.now(timezone.utc)
+
+    elapsed = now - last_time
+
+    print(f"Time since last processing: {elapsed}")
+
+    return elapsed >= timedelta(hours=COOLDOWN_HOURS)
+
+
 def main():
     print(f"Checking Twitch channel: {CHANNEL_NAME}")
 
@@ -59,6 +97,23 @@ def main():
     print(f"Title: {stream['title']}")
     print(f"Game ID: {stream['game_id']}")
     print(f"Viewers: {stream['viewer_count']}")
+
+    state = load_state()
+
+    if not should_process(state):
+        print("⏳ Cooldown active. Nothing to do.")
+        return
+
+    print("🚀 14 hours passed. Processing stream...")
+
+    # Por ahora solamente registramos el procesamiento.
+    # Después acá vamos a llamar a Gemini.
+
+    state["last_processed"] = datetime.now(timezone.utc).isoformat()
+
+    save_state(state)
+
+    print("✅ Processing timestamp saved.")
 
 
 if __name__ == "__main__":
