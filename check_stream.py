@@ -33,6 +33,7 @@ def get_twitch_token():
     )
 
     response.raise_for_status()
+
     return response.json()["access_token"]
 
 
@@ -63,7 +64,8 @@ def load_state():
     if not os.path.exists(STATE_FILE):
         return {
             "twitch": {
-                "last_processed": None
+                "last_processed": None,
+                "last_stream_id": None
             },
             "kick": {
                 "last_processed": None
@@ -79,7 +81,17 @@ def save_state(state):
         json.dump(state, file, indent=2)
 
 
-def should_process(last_processed):
+def should_process(twitch_state, stream_id):
+    last_stream_id = twitch_state.get("last_stream_id")
+
+    # Si este stream ya fue procesado, no hacemos nada.
+    if last_stream_id == stream_id:
+        print("⏭️ This Twitch stream was already processed.")
+        return False
+
+    last_processed = twitch_state.get("last_processed")
+
+    # Si nunca procesamos nada, podemos continuar.
     if last_processed is None:
         return True
 
@@ -90,7 +102,11 @@ def should_process(last_processed):
 
     print(f"Time since last processing: {elapsed}")
 
-    return elapsed >= timedelta(hours=COOLDOWN_HOURS)
+    if elapsed < timedelta(hours=COOLDOWN_HOURS):
+        print("⏳ 14-hour cooldown active.")
+        return False
+
+    return True
 
 
 def generate_with_gemini(stream):
@@ -222,6 +238,7 @@ def main():
         return
 
     print("🟢 Stream is ONLINE")
+    print(f"Stream ID: {stream['id']}")
     print(f"Title: {stream['title']}")
     print(f"Game ID: {stream['game_id']}")
     print(f"Viewers: {stream['viewer_count']}")
@@ -231,15 +248,15 @@ def main():
     twitch_state = state.setdefault(
         "twitch",
         {
-            "last_processed": None
+            "last_processed": None,
+            "last_stream_id": None
         }
     )
 
-    if not should_process(twitch_state.get("last_processed")):
-        print("⏳ Cooldown active. Nothing to do.")
+    if not should_process(twitch_state, stream["id"]):
         return
 
-    print("🚀 14 hours passed. Processing stream...")
+    print("🚀 Processing new Twitch stream...")
 
     print("🤖 Sending stream information to Gemini...")
 
@@ -264,12 +281,12 @@ def main():
     print("✅ Message sent to X.")
 
     twitch_state["last_processed"] = datetime.now(timezone.utc).isoformat()
+    twitch_state["last_stream_id"] = stream["id"]
 
     save_state(state)
 
-    print("✅ Processing timestamp saved.")
+    print("✅ Stream ID and processing timestamp saved.")
 
 
 if __name__ == "__main__":
     main()
-
