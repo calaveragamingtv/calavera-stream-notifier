@@ -10,7 +10,7 @@ TWITCH_CLIENT_SECRET = os.environ["TWITCH_CLIENT_SECRET"]
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 DISCORD_WEBHOOK_URL = os.environ["DISCORD_WEBHOOK_URL"]
 
-CHANNEL_NAME = "CalaveraGamingTV"
+CHANNEL_NAME = "iriskpvp"
 
 STATE_FILE = "stream_state.json"
 COOLDOWN_HOURS = 14
