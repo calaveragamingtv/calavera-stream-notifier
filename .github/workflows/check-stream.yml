@@ -25,6 +25,8 @@ jobs:
         run: pip install requests
         
       - name: Get Buffer organizations
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
         run: python get_buffer_channels.py
 
       - name: Run stream checker
