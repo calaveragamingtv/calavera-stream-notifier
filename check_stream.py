@@ -1,4 +1,3 @@
-```python
 import os
 import json
 from datetime import datetime, timezone, timedelta
@@ -273,4 +272,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-```
+
