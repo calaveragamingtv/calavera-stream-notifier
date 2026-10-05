@@ -84,14 +84,12 @@ def save_state(state):
 def should_process(twitch_state, stream_id):
     last_stream_id = twitch_state.get("last_stream_id")
 
-    # Si este stream ya fue procesado, no hacemos nada.
     if last_stream_id == stream_id:
         print("⏭️ This Twitch stream was already processed.")
         return False
 
     last_processed = twitch_state.get("last_processed")
 
-    # Si nunca procesamos nada, podemos continuar.
     if last_processed is None:
         return True
 
@@ -109,7 +107,7 @@ def should_process(twitch_state, stream_id):
     return True
 
 
-def generate_with_gemini(stream):
+def generate_discord_message(stream):
     prompt = f"""
 Sos el community manager de un streamer de Rust llamado CalaveraGamingTV.
 
@@ -121,18 +119,73 @@ Datos del directo:
 - Juego: Rust
 - Espectadores actuales: {stream["viewer_count"]}
 
-Generá un mensaje corto y atractivo para anunciar el directo.
+Generá un mensaje para anunciar el directo en una comunidad de Discord.
 
 Reglas:
 - Escribí en español.
-- Tono gamer, directo y natural.
-- No inventes información.
-- No seas demasiado formal.
-- Usá como máximo 2 emojis.
-- El mensaje debe invitar a entrar al directo.
+- Tono gamer, energético y natural.
+- Puede ser más desarrollado que un tweet.
+- Generá un mensaje atractivo que invite a la comunidad a entrar al directo.
+- Podés mencionar el título del directo.
+- Usá como máximo 3 emojis.
+- El mensaje DEBE comenzar con: @everyone
 - Incluí el enlace: https://twitch.tv/{CHANNEL_NAME}
+- No inventes información.
+- No agregues explicaciones.
+- Devolvé solamente el mensaje final listo para publicar en Discord.
+"""
 
-Devolvé solamente el mensaje final, sin explicaciones.
+    response = requests.post(
+        f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
+        headers={
+            "x-goog-api-key": GEMINI_API_KEY,
+            "Content-Type": "application/json",
+        },
+        json={
+            "contents": [
+                {
+                    "parts": [
+                        {
+                            "text": prompt
+                        }
+                    ]
+                }
+            ]
+        },
+        timeout=60,
+    )
+
+    response.raise_for_status()
+
+    data = response.json()
+
+    return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+
+
+def generate_x_message(stream):
+    prompt = f"""
+Sos el community manager de un streamer de Rust llamado CalaveraGamingTV.
+
+Acaba de comenzar un directo en Twitch.
+
+Datos:
+- Canal: {CHANNEL_NAME}
+- Título: {stream["title"]}
+- Juego: Rust
+- Espectadores actuales: {stream["viewer_count"]}
+
+Generá un post para X anunciando el directo.
+
+Reglas MUY IMPORTANTES:
+- Escribí en español.
+- Tiene que ser corto, directo y llamativo.
+- Máximo 220 caracteres en total.
+- Incluí el enlace: https://twitch.tv/{CHANNEL_NAME}
+- Incluí entre 2 y 4 hashtags relacionados con Rust/streaming.
+- No uses @everyone.
+- Máximo 2 emojis.
+- No inventes información.
+- Devolvé solamente el post final.
 """
 
     response = requests.post(
@@ -258,27 +311,49 @@ def main():
 
     print("🚀 Processing new Twitch stream...")
 
-    print("🤖 Sending stream information to Gemini...")
+    # --------------------------------------------------
+    # DISCORD
+    # --------------------------------------------------
 
-    message = generate_with_gemini(stream)
+    print("🤖 Generating Discord message with Gemini...")
+
+    discord_message = generate_discord_message(stream)
 
     print("")
-    print("===== GEMINI MESSAGE =====")
-    print(message)
-    print("==========================")
+    print("===== DISCORD MESSAGE =====")
+    print(discord_message)
+    print("===========================")
     print("")
 
     print("📢 Sending message to Discord...")
 
-    send_to_discord(message)
+    send_to_discord(discord_message)
 
-    print("✅ Message sent to Discord.")
+    print("✅ Discord message sent.")
+
+    # --------------------------------------------------
+    # X
+    # --------------------------------------------------
+
+    print("🤖 Generating X message with Gemini...")
+
+    x_message = generate_x_message(stream)
+
+    print("")
+    print("===== X MESSAGE =====")
+    print(x_message)
+    print("=====================")
+    print("")
 
     print("🐦 Sending message to X via Buffer...")
 
-    send_to_buffer(message)
+    send_to_buffer(x_message)
 
-    print("✅ Message sent to X.")
+    print("✅ X message sent.")
+
+    # --------------------------------------------------
+    # SAVE STATE
+    # --------------------------------------------------
 
     twitch_state["last_processed"] = datetime.now(timezone.utc).isoformat()
     twitch_state["last_stream_id"] = stream["id"]
