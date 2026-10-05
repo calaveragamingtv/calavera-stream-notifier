@@ -9,7 +9,7 @@ TWITCH_CLIENT_ID = os.environ["TWITCH_CLIENT_ID"]
 TWITCH_CLIENT_SECRET = os.environ["TWITCH_CLIENT_SECRET"]
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 
-CHANNEL_NAME = "iRiskpvp"
+CHANNEL_NAME = "CalaveraGamingTV"
 
 STATE_FILE = "stream_state.json"
 COOLDOWN_HOURS = 14
@@ -58,7 +58,12 @@ def get_stream_info(token):
 def load_state():
     if not os.path.exists(STATE_FILE):
         return {
-            "last_processed": None
+            "twitch": {
+                "last_processed": None
+            },
+            "kick": {
+                "last_processed": None
+            }
         }
 
     with open(STATE_FILE, "r", encoding="utf-8") as file:
@@ -70,9 +75,7 @@ def save_state(state):
         json.dump(state, file, indent=2)
 
 
-def should_process(state):
-    last_processed = state.get("last_processed")
-
+def should_process(last_processed):
     if last_processed is None:
         return True
 
@@ -156,12 +159,18 @@ def main():
 
     state = load_state()
 
-    if not should_process(state):
+    twitch_state = state.setdefault(
+        "twitch",
+        {
+            "last_processed": None
+        }
+    )
+
+    if not should_process(twitch_state.get("last_processed")):
         print("⏳ Cooldown active. Nothing to do.")
         return
 
     print("🚀 14 hours passed. Processing stream...")
-
     print("🤖 Sending stream information to Gemini...")
 
     message = generate_with_gemini(stream)
@@ -172,7 +181,7 @@ def main():
     print("==========================")
     print("")
 
-    state["last_processed"] = datetime.now(timezone.utc).isoformat()
+    twitch_state["last_processed"] = datetime.now(timezone.utc).isoformat()
 
     save_state(state)
 
