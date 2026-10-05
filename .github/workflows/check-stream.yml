@@ -30,6 +30,7 @@ jobs:
           TWITCH_CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
         run: python check_stream.py
 
       - name: Save stream state
