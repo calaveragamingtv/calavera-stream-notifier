@@ -13,7 +13,7 @@ BUFFER_API_KEY = os.environ["BUFFER_API_KEY"]
 
 BUFFER_CHANNEL_ID = "6a987c1f065799be4676bb2a"
 
-CHANNEL_NAME = "oilrats"
+CHANNEL_NAME = "CalaveraGamingTV"
 
 STATE_FILE = "stream_state.json"
 COOLDOWN_HOURS = 14
