@@ -25,6 +25,7 @@ mutation CreatePost {
         id
         text
         dueAt
+        status
       }
     }
 
