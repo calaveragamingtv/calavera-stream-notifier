@@ -9,6 +9,7 @@ TWITCH_CLIENT_ID = os.environ["TWITCH_CLIENT_ID"]
 TWITCH_CLIENT_SECRET = os.environ["TWITCH_CLIENT_SECRET"]
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 DISCORD_WEBHOOK_URL = os.environ["DISCORD_WEBHOOK_URL"]
+BUFFER_CHANNEL_ID = "6a987c1f065799be4676bb2a"
 
 CHANNEL_NAME = "oilrats"
 
@@ -155,6 +156,60 @@ def send_to_discord(message):
     response.raise_for_status()
 
 
+def send_to_buffer(message):
+    query = """
+    mutation CreatePost($input: CreatePostInput!) {
+      createPost(input: $input) {
+        ... on PostActionSuccess {
+          post {
+            id
+            text
+          }
+        }
+
+        ... on MutationError {
+          message
+        }
+      }
+    }
+    """
+
+    response = requests.post(
+        "https://api.buffer.com",
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {BUFFER_API_KEY}",
+        },
+        json={
+            "query": query,
+            "variables": {
+                "input": {
+                    "text": message,
+                    "channelId": BUFFER_CHANNEL_ID,
+                    "schedulingType": "automatic",
+                    "mode": "shareNow"
+                }
+            }
+        },
+        timeout=30,
+    )
+
+    response.raise_for_status()
+
+    data = response.json()
+
+    if "errors" in data:
+        raise RuntimeError(data["errors"])
+
+    result = data["data"]["createPost"]
+
+    if "message" in result:
+        raise RuntimeError(result["message"])
+
+    print("✅ Message sent to X via Buffer.")
+
+
+
 def main():
     print(f"Checking Twitch channel: {CHANNEL_NAME}")
 
@@ -195,17 +250,23 @@ def main():
     print("==========================")
     print("")
 
-    print("📢 Sending message to Discord...")
+   print("📢 Sending message to Discord...")
+    
+   send_to_discord(message)
+    
+   print("✅ Message sent to Discord.")
+    
+   print("🐦 Sending message to X via Buffer...")
+    
+   send_to_buffer(message)
+    
+   print("✅ Message sent to X.")
+    
+   twitch_state["last_processed"] = datetime.now(timezone.utc).isoformat()
 
-    send_to_discord(message)
+   save_state(state)
 
-    print("✅ Message sent to Discord.")
-
-    twitch_state["last_processed"] = datetime.now(timezone.utc).isoformat()
-
-    save_state(state)
-
-    print("✅ Processing timestamp saved.")
+   print("✅ Processing timestamp saved.")
 
 
 if __name__ == "__main__":
