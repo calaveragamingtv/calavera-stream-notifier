@@ -5,10 +5,13 @@ import requests
 BUFFER_API_KEY = os.environ["BUFFER_API_KEY"]
 
 QUERY = """
-query GetOrganizations($input: OrganizationsInput!) {
-  organizations(input: $input) {
-    id
-    name
+query GetOrganizations {
+  account {
+    organizations {
+      id
+      name
+      ownerEmail
+    }
   }
 }
 """
@@ -21,10 +24,7 @@ response = requests.post(
         "Authorization": f"Bearer {BUFFER_API_KEY}",
     },
     json={
-        "query": QUERY,
-        "variables": {
-            "input": {}
-        }
+        "query": QUERY
     },
     timeout=30,
 )
