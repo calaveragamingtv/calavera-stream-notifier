@@ -18,7 +18,7 @@ mutation CreatePost {
     text: "🚀 Prueba automática desde GitHub Actions. CalaveraGamingTV está en directo: https://twitch.tv/CalaveraGamingTV"
     channelId: "6a987c1f065799be4676bb2a"
     schedulingType: automatic
-    mode: addToQueue
+    mode: shareNow
   }) {
     ... on PostActionSuccess {
       post {
