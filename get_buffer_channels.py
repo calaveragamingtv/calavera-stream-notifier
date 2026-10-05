@@ -4,14 +4,14 @@ import requests
 
 BUFFER_API_KEY = os.environ["BUFFER_API_KEY"]
 
+ORGANIZATION_ID = "6a987b6e1a5421441ef43b13"
+
 QUERY = """
-query GetOrganizations {
-  account {
-    organizations {
-      id
-      name
-      ownerEmail
-    }
+query GetChannels($input: ChannelsInput!) {
+  channels(input: $input) {
+    id
+    name
+    service
   }
 }
 """
@@ -24,7 +24,12 @@ response = requests.post(
         "Authorization": f"Bearer {BUFFER_API_KEY}",
     },
     json={
-        "query": QUERY
+        "query": QUERY,
+        "variables": {
+            "input": {
+                "organizationId": ORGANIZATION_ID
+            }
+        }
     },
     timeout=30,
 )
@@ -33,5 +38,5 @@ response.raise_for_status()
 
 data = response.json()
 
-print("===== BUFFER ORGANIZATIONS =====")
+print("===== BUFFER CHANNELS =====")
 print(data)
