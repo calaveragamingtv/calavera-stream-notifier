@@ -6,16 +6,15 @@ BUFFER_API_KEY = os.environ["BUFFER_API_KEY"]
 
 CHANNEL_ID = "6a987c1f065799be4676bb2a"
 
-MESSAGE = """🚀 Prueba automática desde GitHub Actions.
+MESSAGE = """🔥 PRUEBA 2 - CALAVERAGAMINGTV ESTÁ EN DIRECTO AHORA
 
-CalaveraGamingTV está en directo:
-https://twitch.tv/CalaveraGamingTV"""
+Esta publicación fue enviada directamente desde GitHub Actions mediante Buffer."""
 
 
 QUERY = """
 mutation CreatePost {
   createPost(input: {
-    text: "🚀 Prueba automática desde GitHub Actions. CalaveraGamingTV está en directo: https://twitch.tv/CalaveraGamingTV"
+    text: "🔥 PRUEBA 2 - CALAVERAGAMINGTV ESTÁ EN DIRECTO AHORA. Esta publicación fue enviada directamente desde GitHub Actions mediante Buffer."
     channelId: "6a987c1f065799be4676bb2a"
     schedulingType: automatic
     mode: shareNow
