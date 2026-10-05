@@ -1,6 +1,7 @@
 {
   "twitch": {
-    "last_processed": null
+    "last_processed": null,
+    "last_stream_id": null
   },
   "kick": {
     "last_processed": null
