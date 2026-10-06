@@ -161,17 +161,42 @@ def already_processed(state, platform, stream_id):
 
     return False
 
-def generate_discord_message(stream):
+def normalize_stream(platform, stream):
+    if platform == "twitch":
+        return {
+            "platform": "Twitch",
+            "stream_id": stream["id"],
+            "title": stream["title"],
+            "viewer_count": stream["viewer_count"],
+            "game": "Rust",
+            "url": f"https://twitch.tv/{CHANNEL_NAME}"
+        }
+
+    if platform == "kick":
+        return {
+            "platform": "Kick",
+            "stream_id": stream["id"],
+            "title": stream["stream_title"],
+            "viewer_count": stream["viewer_count"],
+            "game": stream["category"]["name"],
+            "url": f"https://kick.com/{CHANNEL_NAME.lower()}"
+        }
+
+    raise ValueError(f"Unknown platform: {platform}")
+
+def generate_discord_message(stream_data):
     prompt = f"""
 Sos el community manager de un streamer de Rust llamado CalaveraGamingTV.
 
-El streamer acaba de comenzar un directo en Twitch.
+El streamer acaba de comenzar un directo.
 
 Datos del directo:
+- Plataforma: {stream_data["platform"]}
 - Canal: {CHANNEL_NAME}
-- Título: {stream["title"]}
-- Juego: Rust
-- Espectadores actuales: {stream["viewer_count"]}
+- Título: {stream_data["title"]}
+- Juego: {stream_data["game"]}
+- Espectadores actuales: {stream_data["viewer_count"]}
+- Enlace: {stream_data["url"]}
 
 Generá un mensaje para anunciar el directo en una comunidad de Discord.
 
@@ -183,7 +208,7 @@ Reglas:
 - Podés mencionar el título del directo.
 - Usá como máximo 3 emojis.
 - El mensaje DEBE comenzar con: @everyone
-- Incluí el enlace: https://twitch.tv/{CHANNEL_NAME}
+- Incluí el enlace proporcionado.
 - No inventes información.
 - No agregues explicaciones.
 - Devolvé solamente el mensaje final listo para publicar en Discord.
@@ -216,17 +241,19 @@ Reglas:
     return data["candidates"][0]["content"]["parts"][0]["text"].strip()
 
 
-def generate_x_message(stream):
+def generate_x_message(stream_data):
     prompt = f"""
 Sos el community manager de un streamer de Rust llamado CalaveraGamingTV.
 
-Acaba de comenzar un directo en Twitch.
+Acaba de comenzar un directo.
 
 Datos:
+- Plataforma: {stream_data["platform"]}
 - Canal: {CHANNEL_NAME}
-- Título: {stream["title"]}
-- Juego: Rust
-- Espectadores actuales: {stream["viewer_count"]}
+- Título: {stream_data["title"]}
+- Juego: {stream_data["game"]}
+- Espectadores actuales: {stream_data["viewer_count"]}
+- Enlace: {stream_data["url"]}
 
 Generá un post para X anunciando el directo.
 
@@ -234,7 +261,7 @@ Reglas MUY IMPORTANTES:
 - Escribí en español.
 - Tiene que ser corto, directo y llamativo.
 - Máximo 220 caracteres en total.
-- Incluí el enlace: https://twitch.tv/{CHANNEL_NAME}
+- Incluí el enlace proporcionado.
 - Incluí entre 2 y 4 hashtags relacionados con Rust/streaming.
 - No uses @everyone.
 - Máximo 2 emojis.
@@ -335,6 +362,7 @@ def send_to_buffer(message):
 
 
 def main():
+    
     print(f"Checking Twitch channel: {CHANNEL_NAME}")
 
     twitch_token = get_twitch_token()
@@ -391,6 +419,14 @@ def main():
         return
     
     print(f"🚀 Processing new {platform} stream...")
+
+    stream_data = normalize_stream(platform, stream)
+
+    print("")
+    print("===== NORMALIZED STREAM =====")
+    print(stream_data)
+    print("=============================")
+
     
 
     # --------------------------------------------------
@@ -399,7 +435,7 @@ def main():
 
     print("🤖 Generating Discord message with Gemini...")
 
-    discord_message = generate_discord_message(stream)
+    discord_message = generate_discord_message(stream_data)
 
     print("")
     print("===== DISCORD MESSAGE =====")
@@ -419,7 +455,7 @@ def main():
 
     print("🤖 Generating X message with Gemini...")
 
-    x_message = generate_x_message(stream)
+    x_message = generate_x_message(stream_data)
 
     print("")
     print("===== X MESSAGE =====")
