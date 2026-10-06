@@ -17,7 +17,7 @@ KICK_CLIENT_SECRET = os.environ["KICK_CLIENT_SECRET"]
 
 KICK_BROADCASTER_ID = 110840
 
-CHANNEL_NAME = "calaveragamingtv"
+CHANNEL_NAME = "oilrats"
 
 STATE_FILE = "stream_state.json"
 COOLDOWN_HOURS = 14
@@ -84,12 +84,12 @@ def get_kick_token():
 
 def get_kick_stream_info(token):
     response = requests.get(
-        "https://api.kick.com/public/v2/livestreams",
+        "https://api.kick.com/public/v1/channels",
         headers={
             "Authorization": f"Bearer {token}",
         },
         params={
-            "broadcaster_user_id": KICK_BROADCASTER_ID,
+            "slug": CHANNEL_NAME,
         },
         timeout=30,
     )
@@ -98,13 +98,15 @@ def get_kick_stream_info(token):
 
     data = response.json()["data"]
 
-    for stream in data:
-        broadcaster = stream.get("broadcaster_user")
+    if not data:
+        return None
 
-        if broadcaster and broadcaster.get("id") == KICK_BROADCASTER_ID:
-            return stream
+    channel = data[0]
 
-    return None
+    if not channel["stream"]["is_live"]:
+        return None
+
+    return channel
 
 
 def load_state():
