@@ -44,6 +44,22 @@ def get_channel(token):
     response.raise_for_status()
 
     return response.json()
+    
+def get_kick_stream(token):
+    response = requests.get(
+        "https://api.kick.com/public/v2/livestreams",
+        headers={
+            "Authorization": f"Bearer {token}",
+        },
+        params={
+            "broadcaster_user_id": 110840,
+        },
+        timeout=30,
+    )
+
+    response.raise_for_status()
+
+    return response.json()
 
 
 def main():
@@ -54,6 +70,12 @@ def main():
     print("✅ Kick App Access Token obtained.")
 
     channel = get_channel(token)
+    stream = get_kick_stream(token)
+
+    print("")
+    print("===== KICK V2 LIVESTREAM =====")
+    print(stream)
+    print("==============================")
 
     print("")
     print("===== KICK CHANNEL =====")
