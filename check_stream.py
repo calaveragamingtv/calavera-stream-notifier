@@ -12,6 +12,10 @@ DISCORD_WEBHOOK_URL = os.environ["DISCORD_WEBHOOK_URL"]
 BUFFER_API_KEY = os.environ["BUFFER_API_KEY"]
 
 BUFFER_CHANNEL_ID = "6a987c1f065799be4676bb2a"
+KICK_CLIENT_ID = os.environ["KICK_CLIENT_ID"]
+KICK_CLIENT_SECRET = os.environ["KICK_CLIENT_SECRET"]
+
+KICK_BROADCASTER_ID = 33406855
 
 CHANNEL_NAME = "CalaveraGamingTV"
 
@@ -46,6 +50,46 @@ def get_stream_info(token):
         },
         params={
             "user_login": CHANNEL_NAME,
+        },
+        timeout=30,
+    )
+
+    response.raise_for_status()
+
+    data = response.json()["data"]
+
+    if not data:
+        return None
+
+    return data[0]
+    
+def get_kick_token():
+    response = requests.post(
+        "https://id.kick.com/oauth/token",
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        data={
+            "grant_type": "client_credentials",
+            "client_id": KICK_CLIENT_ID,
+            "client_secret": KICK_CLIENT_SECRET,
+        },
+        timeout=30,
+    )
+
+    response.raise_for_status()
+
+    return response.json()["access_token"]
+
+
+def get_kick_stream_info(token):
+    response = requests.get(
+        "https://api.kick.com/public/v2/livestreams",
+        headers={
+            "Authorization": f"Bearer {token}",
+        },
+        params={
+            "broadcaster_user_id": KICK_BROADCASTER_ID,
         },
         timeout=30,
     )
@@ -106,6 +150,16 @@ def should_process(twitch_state, stream_id):
 
     return True
 
+def already_processed(state, platform, stream_id):
+    last_event = state.get("last_event", {})
+
+    if last_event.get("platform") == platform and \
+       last_event.get("stream_id") == stream_id:
+
+        print("⏭️ This stream event was already processed.")
+        return True
+
+    return False
 
 def generate_discord_message(stream):
     prompt = f"""
@@ -283,33 +337,61 @@ def send_to_buffer(message):
 def main():
     print(f"Checking Twitch channel: {CHANNEL_NAME}")
 
-    token = get_twitch_token()
-    stream = get_stream_info(token)
+    twitch_token = get_twitch_token()
+    twitch_stream = get_stream_info(twitch_token)
+    
+    kick_token = get_kick_token()
+    kick_stream = get_kick_stream_info(kick_token)
+    
+    print("")
+    
+    if twitch_stream:
+        print("🟢 Twitch is ONLINE")
+        print(f"Twitch Stream ID: {twitch_stream['id']}")
+        print(f"Twitch Title: {twitch_stream['title']}")
+        print(f"Twitch Viewers: {twitch_stream['viewer_count']}")
+    else:
+        print("🔴 Twitch is OFFLINE")
+    
+    if kick_stream:
+        print("🟢 Kick is ONLINE")
+        print(f"Kick Stream ID: {kick_stream['id']}")
+        print(f"Kick Title: {kick_stream['stream_title']}")
+        print(f"Kick Viewers: {kick_stream['viewer_count']}")
+    else:
+        print("🔴 Kick is OFFLINE")
+    
+    if twitch_stream is None and kick_stream is None:
+        print("😴 Both platforms are OFFLINE")
+        return
 
     if stream is None:
         print("🔴 Stream is OFFLINE")
         return
-
-    print("🟢 Stream is ONLINE")
-    print(f"Stream ID: {stream['id']}")
-    print(f"Title: {stream['title']}")
-    print(f"Game ID: {stream['game_id']}")
-    print(f"Viewers: {stream['viewer_count']}")
-
-    state = load_state()
-
-    twitch_state = state.setdefault(
-        "twitch",
-        {
-            "last_processed": None,
-            "last_stream_id": None
-        }
-    )
-
-    if not should_process(twitch_state, stream["id"]):
+        
+    if twitch_stream:
+        platform = "twitch"
+        stream = twitch_stream
+        stream_id = twitch_stream["id"]
+    
+    elif kick_stream:
+        platform = "kick"
+        stream = kick_stream
+        stream_id = kick_stream["id"]
+    
+    else:
         return
 
-    print("🚀 Processing new Twitch stream...")
+    print(f"📡 Selected platform: {platform}")
+    print(f"📡 Selected stream ID: {stream_id}")
+    
+    state = load_state()
+    
+    if already_processed(state, platform, stream_id):
+        return
+    
+    print(f"🚀 Processing new {platform} stream...")
+    
 
     # --------------------------------------------------
     # DISCORD
