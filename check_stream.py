@@ -121,6 +121,11 @@ def load_state():
     with open(STATE_FILE, "r", encoding="utf-8") as file:
         return json.load(file)
 
+def load_prompt(filename):
+    prompt_path = os.path.join("prompt", filename)
+
+    with open(prompt_path, "r", encoding="utf-8") as file:
+        return file.read()
 
 def save_state(state):
     with open(STATE_FILE, "w", encoding="utf-8") as file:
@@ -187,34 +192,16 @@ def normalize_stream(platform, stream):
     raise ValueError(f"Unknown platform: {platform}")
 
 def generate_discord_message(stream_data):
-    prompt = f"""
-Sos el community manager de un streamer de Rust llamado CalaveraGamingTV.
+    prompt_template = load_prompt("discord_prompt.txt")
 
-El streamer acaba de comenzar un directo.
-
-Datos del directo:
-- Plataforma: {stream_data["platform"]}
-- Canal: {CHANNEL_NAME}
-- Título: {stream_data["title"]}
-- Juego: {stream_data["game"]}
-- Espectadores actuales: {stream_data["viewer_count"]}
-- Enlace: {stream_data["url"]}
-
-Generá un mensaje para anunciar el directo en una comunidad de Discord.
-
-Reglas:
-- Escribí en español.
-- Tono gamer, energético y natural.
-- Puede ser más desarrollado que un tweet.
-- Generá un mensaje atractivo que invite a la comunidad a entrar al directo.
-- Podés mencionar el título del directo.
-- Usá como máximo 3 emojis.
-- El mensaje DEBE comenzar con: @everyone
-- Incluí el enlace proporcionado.
-- No inventes información.
-- No agregues explicaciones.
-- Devolvé solamente el mensaje final listo para publicar en Discord.
-"""
+    prompt = prompt_template.format(
+        platform=stream_data["platform"],
+        channel=CHANNEL_NAME,
+        title=stream_data["title"],
+        game=stream_data["game"],
+        viewer_count=stream_data["viewer_count"],
+        url=stream_data["url"]
+    )
 
     response = requests.post(
         f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
@@ -241,35 +228,18 @@ Reglas:
     data = response.json()
 
     return data["candidates"][0]["content"]["parts"][0]["text"].strip()
-
 
 def generate_x_message(stream_data):
-    prompt = f"""
-Sos el community manager de un streamer de Rust llamado CalaveraGamingTV.
+    prompt_template = load_prompt("x_prompt.txt")
 
-Acaba de comenzar un directo.
-
-Datos:
-- Plataforma: {stream_data["platform"]}
-- Canal: {CHANNEL_NAME}
-- Título: {stream_data["title"]}
-- Juego: {stream_data["game"]}
-- Espectadores actuales: {stream_data["viewer_count"]}
-- Enlace: {stream_data["url"]}
-
-Generá un post para X anunciando el directo.
-
-Reglas MUY IMPORTANTES:
-- Escribí en español.
-- Tiene que ser corto, directo y llamativo.
-- Máximo 220 caracteres en total.
-- Incluí el enlace proporcionado.
-- Incluí entre 2 y 4 hashtags relacionados con Rust/streaming.
-- No uses @everyone.
-- Máximo 2 emojis.
-- No inventes información.
-- Devolvé solamente el post final.
-"""
+    prompt = prompt_template.format(
+        platform=stream_data["platform"],
+        channel=CHANNEL_NAME,
+        title=stream_data["title"],
+        game=stream_data["game"],
+        viewer_count=stream_data["viewer_count"],
+        url=stream_data["url"]
+    )
 
     response = requests.post(
         f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
@@ -296,7 +266,6 @@ Reglas MUY IMPORTANTES:
     data = response.json()
 
     return data["candidates"][0]["content"]["parts"][0]["text"].strip()
-
 
 def send_to_discord(message):
     response = requests.post(
