@@ -4,6 +4,7 @@
     "last_stream_id": "319092358390"
   },
   "kick": {
-    "last_processed": null
+    "last_processed": null,
+    "last_stream_id": null
   }
 }
