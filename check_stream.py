@@ -449,14 +449,6 @@ def main():
     state["last_event"] = {
         "platform": platform,
         "stream_id": stream_id,
-        "started_at": stream.get("started_at"),
-        "processed_at": datetime.now(timezone.utc).isoformat()
-    }
-
-    state["last_event"] = {
-        "platform": platform,
-        "stream_id": stream_id,
-        "started_at": stream.get("started_at"),
         "processed_at": datetime.now(timezone.utc).isoformat()
     }
 
