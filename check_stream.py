@@ -388,7 +388,7 @@ def main():
     
     state = load_state()
     
-    if already_processed(state, platform, stream_id):
+    if not should_process(state):
         return
     
     print(f"🚀 Processing new {platform} stream...")
