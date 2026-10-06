@@ -184,9 +184,9 @@ def normalize_stream(platform, stream):
     if platform == "kick":
         return {
             "platform": "Kick",
-            "stream_id": stream["id"],
+            "stream_id": f"kick-{stream['broadcaster_user_id']}-{stream['stream']['start_time']}",
             "title": stream["stream_title"],
-            "viewer_count": stream["viewer_count"],
+            "viewer_count": stream["stream"]["viewer_count"],
             "game": stream["category"]["name"],
             "url": f"https://kick.com/{CHANNEL_NAME.lower()}"
         }
