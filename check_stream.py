@@ -195,7 +195,7 @@ def generate_discord_message(stream_data):
 
     prompt = prompt_template.format(
         platform=stream_data["platform"],
-        cchannel=(
+        channel=(
             TWITCH_CHANNEL_NAME
             if stream_data["platform"] == "Twitch"
             else KICK_CHANNEL_SLUG
