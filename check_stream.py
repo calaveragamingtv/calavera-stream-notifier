@@ -384,8 +384,7 @@ def main():
     if kick_stream:
         print("🟢 Kick is ONLINE")
         print(f"Kick Stream ID: {kick_stream['id']}")
-        print(f"Kick Title: {kick_stream['stream_title']}")
-        print(f"Kick Viewers: {kick_stream['viewer_count']}")
+        print(f"Kick Stream Data: {kick_stream}")
     else:
         print("🔴 Kick is OFFLINE")
     
