@@ -5,7 +5,7 @@ import requests
 KICK_CLIENT_ID = os.environ["KICK_CLIENT_ID"]
 KICK_CLIENT_SECRET = os.environ["KICK_CLIENT_SECRET"]
 
-KICK_USERNAME = "CalaveraGamingTV"
+KICK_USERNAME = "oilrats"
 
 
 def get_kick_token():
