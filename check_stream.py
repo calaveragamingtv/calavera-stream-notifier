@@ -477,9 +477,16 @@ def main():
         "processed_at": datetime.now(timezone.utc).isoformat()
     }
 
-save_state(state)
+    state["last_event"] = {
+        "platform": platform,
+        "stream_id": stream_id,
+        "started_at": stream.get("started_at"),
+        "processed_at": datetime.now(timezone.utc).isoformat()
+    }
 
-print("✅ Stream event saved.")
+    save_state(state)
+
+    print("✅ Stream event saved.")
 
 
 if __name__ == "__main__":
