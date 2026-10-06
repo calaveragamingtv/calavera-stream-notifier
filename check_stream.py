@@ -356,7 +356,7 @@ def main():
     
     if kick_stream:
         print("🟢 Kick is ONLINE")
-        print(f"Kick Stream ID: {kick_stream['id']}")
+        print(f"Kick Broadcaster ID: {kick_stream['broadcaster_user_id']}")
         print(f"Kick Stream Data: {kick_stream}")
     else:
         print("🔴 Kick is OFFLINE")
