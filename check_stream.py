@@ -110,12 +110,11 @@ def get_kick_stream_info(token):
 def load_state():
     if not os.path.exists(STATE_FILE):
         return {
-            "twitch": {
-                "last_processed": None,
-                "last_stream_id": None
-            },
-            "kick": {
-                "last_processed": None
+            "last_event": {
+                "platform": None,
+                "stream_id": None,
+                "started_at": None,
+                "processed_at": None
             }
         }
 
@@ -394,10 +393,6 @@ def main():
     if twitch_stream is None and kick_stream is None:
         print("😴 Both platforms are OFFLINE")
         return
-
-    if stream is None:
-        print("🔴 Stream is OFFLINE")
-        return
         
     if twitch_stream:
         platform = "twitch"
@@ -475,12 +470,16 @@ def main():
     # SAVE STATE
     # --------------------------------------------------
 
-    twitch_state["last_processed"] = datetime.now(timezone.utc).isoformat()
-    twitch_state["last_stream_id"] = stream["id"]
+    state["last_event"] = {
+        "platform": platform,
+        "stream_id": stream_id,
+        "started_at": stream.get("started_at"),
+        "processed_at": datetime.now(timezone.utc).isoformat()
+    }
 
-    save_state(state)
+save_state(state)
 
-    print("✅ Stream ID and processing timestamp saved.")
+print("✅ Stream event saved.")
 
 
 if __name__ == "__main__":
