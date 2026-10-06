@@ -15,9 +15,9 @@ BUFFER_CHANNEL_ID = "6a987c1f065799be4676bb2a"
 KICK_CLIENT_ID = os.environ["KICK_CLIENT_ID"]
 KICK_CLIENT_SECRET = os.environ["KICK_CLIENT_SECRET"]
 
-KICK_BROADCASTER_ID = 110840
 
-CHANNEL_NAME = "oilrats"
+TWITCH_CHANNEL_NAME = "CalaveraGamingTV"
+KICK_CHANNEL_SLUG = "CalaveraGamingTV"
 
 STATE_FILE = "stream_state.json"
 COOLDOWN_HOURS = 14
@@ -49,7 +49,7 @@ def get_stream_info(token):
             "Authorization": f"Bearer {token}",
         },
         params={
-            "user_login": CHANNEL_NAME,
+            "user_login": TWITCH_CHANNEL_NAME,
         },
         timeout=30,
     )
@@ -89,7 +89,7 @@ def get_kick_stream_info(token):
             "Authorization": f"Bearer {token}",
         },
         params={
-            "slug": CHANNEL_NAME,
+            "slug": KICK_CHANNEL_SLUG,
         },
         timeout=30,
     )
@@ -178,7 +178,7 @@ def normalize_stream(platform, stream):
             "title": stream["title"],
             "viewer_count": stream["viewer_count"],
             "game": "Rust",
-            "url": f"https://twitch.tv/{CHANNEL_NAME}"
+            "url": f"https://twitch.tv/{TWITCH_CHANNEL_NAME}"
         }
 
     if platform == "kick":
@@ -188,7 +188,7 @@ def normalize_stream(platform, stream):
             "title": stream["stream_title"],
             "viewer_count": stream["stream"]["viewer_count"],
             "game": stream["category"]["name"],
-            "url": f"https://kick.com/{CHANNEL_NAME.lower()}"
+            "url": f"https://kick.com/{KICK_CHANNEL_SLUG.lower()}"
         }
 
     raise ValueError(f"Unknown platform: {platform}")
@@ -198,7 +198,11 @@ def generate_discord_message(stream_data):
 
     prompt = prompt_template.format(
         platform=stream_data["platform"],
-        channel=CHANNEL_NAME,
+        cchannel=(
+            TWITCH_CHANNEL_NAME
+            if stream_data["platform"] == "Twitch"
+            else KICK_CHANNEL_SLUG
+        ),
         title=stream_data["title"],
         game=stream_data["game"],
         viewer_count=stream_data["viewer_count"],
@@ -236,7 +240,11 @@ def generate_x_message(stream_data):
 
     prompt = prompt_template.format(
         platform=stream_data["platform"],
-        channel=CHANNEL_NAME,
+        channel=(
+            TWITCH_CHANNEL_NAME
+            if stream_data["platform"] == "Twitch"
+            else KICK_CHANNEL_SLUG
+        ),
         title=stream_data["title"],
         game=stream_data["game"],
         viewer_count=stream_data["viewer_count"],
@@ -336,7 +344,7 @@ def send_to_buffer(message):
 
 def main():
     
-    print(f"Checking Twitch channel: {CHANNEL_NAME}")
+    print(f"Checking Twitch channel: {TWITCH_CHANNEL_NAME}")
 
     twitch_token = get_twitch_token()
     twitch_stream = get_stream_info(twitch_token)
