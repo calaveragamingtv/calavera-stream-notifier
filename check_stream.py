@@ -15,8 +15,7 @@ BUFFER_CHANNEL_ID = "6a987c1f065799be4676bb2a"
 KICK_CLIENT_ID = os.environ["KICK_CLIENT_ID"]
 KICK_CLIENT_SECRET = os.environ["KICK_CLIENT_SECRET"]
 
-
-TWITCH_CHANNEL_NAME = "shroud"
+TWITCH_CHANNEL_NAME = "CalaveraGamingTV"
 KICK_CHANNEL_SLUG = "CalaveraGamingTV"
 
 STATE_FILE = "stream_state.json"
