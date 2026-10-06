@@ -98,10 +98,13 @@ def get_kick_stream_info(token):
 
     data = response.json()["data"]
 
-    if not data:
-        return None
+    for stream in data:
+        broadcaster = stream.get("broadcaster_user")
 
-    return data[0]
+        if broadcaster and broadcaster.get("id") == KICK_BROADCASTER_ID:
+            return stream
+
+    return None
 
 
 def load_state():
