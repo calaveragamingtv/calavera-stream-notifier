@@ -16,7 +16,7 @@ KICK_CLIENT_ID = os.environ["KICK_CLIENT_ID"]
 KICK_CLIENT_SECRET = os.environ["KICK_CLIENT_SECRET"]
 
 
-TWITCH_CHANNEL_NAME = "CalaveraGamingTV"
+TWITCH_CHANNEL_NAME = "shroud"
 KICK_CHANNEL_SLUG = "CalaveraGamingTV"
 
 STATE_FILE = "stream_state.json"
