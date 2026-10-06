@@ -134,16 +134,12 @@ def save_state(state):
         json.dump(state, file, indent=2)
 
 
-def should_process(twitch_state, stream_id):
-    last_stream_id = twitch_state.get("last_stream_id")
-
-    if last_stream_id == stream_id:
-        print("⏭️ This Twitch stream was already processed.")
-        return False
-
-    last_processed = twitch_state.get("last_processed")
+def should_process(state):
+    last_event = state.get("last_event", {})
+    last_processed = last_event.get("processed_at")
 
     if last_processed is None:
+        print("🆕 No previous stream event found.")
         return True
 
     last_time = datetime.fromisoformat(last_processed)
@@ -154,10 +150,11 @@ def should_process(twitch_state, stream_id):
     print(f"Time since last processing: {elapsed}")
 
     if elapsed < timedelta(hours=COOLDOWN_HOURS):
-        print("⏳ 14-hour cooldown active.")
+        print(f"⏳ {COOLDOWN_HOURS}-hour cooldown active.")
         return False
 
     return True
+    
 
 def already_processed(state, platform, stream_id):
     last_event = state.get("last_event", {})
