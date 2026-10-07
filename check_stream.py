@@ -491,9 +491,9 @@ def main():
     print("=====================")
     print("")
 
-   is_valid, validation_message = validate_x_message(
-        x_message,
-        stream_data["url"]
+    is_valid, validation_message = validate_x_message(
+            x_message,
+            stream_data["url"]
     )
     
     print(f"🔎 X validation: {validation_message}")
