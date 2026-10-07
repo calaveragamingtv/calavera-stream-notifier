@@ -357,16 +357,25 @@ def validate_x_message(message, url):
 
     return True, "Mensaje válido."
 
+def print_section(title):
+    print("")
+    print("=" * 50)
+    print(title)
+    print("=" * 50)
+
 
 def main():
     
-    print(f"Checking Twitch channel: {TWITCH_CHANNEL_NAME}")
+    print_section("🎬 CALAVERA STREAM NOTIFIER")
+    print(f"📡 Checking Twitch channel: {TWITCH_CHANNEL_NAME}")
 
     twitch_stream = None
     kick_stream = None
     
     twitch_error = None
     kick_error = None
+
+    print_section("📡 CHECKING PLATFORMS")
     
     # TWITCH
     try:
@@ -385,23 +394,26 @@ def main():
     print("")
     
     if twitch_error:
-        print(f"⚠️ Twitch API ERROR: {twitch_error}")
+        print(f"   Twitch: ⚠️ API ERROR")
+        print(f"   └─ {twitch_error}")
     elif twitch_stream:
-        print("🟢 Twitch is ONLINE")
-        print(f"Twitch Stream ID: {twitch_stream['id']}")
-        print(f"Twitch Title: {twitch_stream['title']}")
-        print(f"Twitch Viewers: {twitch_stream['viewer_count']}")
+        print("   Twitch: 🟢 ONLINE")
+        print(f"   ├─ Stream ID: {twitch_stream['id']}")
+        print(f"   ├─ Title: {twitch_stream['title']}")
+        print(f"   └─ Viewers: {twitch_stream['viewer_count']}")
     else:
-        print("🔴 Twitch is OFFLINE")
+        print("   Twitch: 🔴 OFFLINE")
     
     if kick_error:
-        print(f"⚠️ Kick API ERROR: {kick_error}")
+        print(f"   Kick:   ⚠️ API ERROR")
+        print(f"   └─ {kick_error}")
     elif kick_stream:
-        print("🟢 Kick is ONLINE")
-        print(f"Kick Broadcaster ID: {kick_stream['broadcaster_user_id']}")
-        print(f"Kick Stream Data: {kick_stream}")
+        print("   Kick:   🟢 ONLINE")
+        print(f"   ├─ Broadcaster ID: {kick_stream['broadcaster_user_id']}")
+        print(f"   ├─ Title: {kick_stream['stream_title']}")
+        print(f"   └─ Viewers: {kick_stream['stream']['viewer_count']}")
     else:
-        print("🔴 Kick is OFFLINE")
+        print("   Kick:   🔴 OFFLINE")
     
     if twitch_stream is None and kick_stream is None:
 
