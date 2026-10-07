@@ -1,10 +1,10 @@
 {
   "last_event": {
-    "platform": "twitch",
-    "stream_id": "318912211814",
-    "processed_at": "2026-10-07T15:45:49.480395+00:00",
-    "discord_sent": true,
-    "x_sent": true
+    "platform": null,
+    "stream_id": null,
+    "processed_at": null,
+    "discord_sent": null,
+    "x_sent": null
   },
   "last_messages": [
     "@everyone \u00bfHasta d\u00f3nde vamos a llegar hoy en este highpop con 6 d\u00edas adentro? Arranc\u00e1 la PC y pasate por el chat a tirar una idea o criticar c\u00f3mo estamos jugando. https://twitch.tv/oilrats \ud83d\udc80"
