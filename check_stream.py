@@ -119,7 +119,8 @@ def load_state():
                 "started_at": None,
                 "processed_at": None
             },
-            "last_messages": []
+            "last_messages": [],
+            "last_posts": []
         }
 
     with open(STATE_FILE, "r", encoding="utf-8") as file:
@@ -127,6 +128,9 @@ def load_state():
 
     if "last_messages" not in state:
         state["last_messages"] = []
+        
+    if "last_posts" not in state:
+        state["last_posts"] = []
 
     return state
 
@@ -139,6 +143,11 @@ def load_prompt(filename):
 def save_state(state):
     with open(STATE_FILE, "w", encoding="utf-8") as file:
         json.dump(state, file, indent=2)
+
+def save_last_post(state, post):
+    posts = state.get("last_posts", [])
+    posts.append(post)
+    state["last_posts"] = posts[-5:]
 
 def save_last_message(state, message):
     messages = state.get("last_messages", [])
@@ -255,8 +264,15 @@ def generate_discord_message(stream_data, context, last_messages):
 
     return data["candidates"][0]["content"]["parts"][0]["text"].strip()
 
-def generate_x_message(stream_data):
+def generate_x_message(stream_data, context, last_posts):
     prompt_template = load_prompt("x_prompt.txt")
+
+    last_posts_text = "\n".join(
+        f"- {post}" for post in last_posts
+    )
+
+    if not last_posts_text:
+        last_posts_text = "(No hay posts anteriores.)"
 
     prompt = prompt_template.format(
         platform=stream_data["platform"],
@@ -268,7 +284,9 @@ def generate_x_message(stream_data):
         title=stream_data["title"],
         game=stream_data["game"],
         viewer_count=stream_data["viewer_count"],
-        url=stream_data["url"]
+        url=stream_data["url"],
+        context=context,
+        last_posts=last_posts_text
     )
 
     response = requests.post(
@@ -537,7 +555,11 @@ def main():
 
     print("🤖 Generating X message with Gemini...")
 
-    x_message = generate_x_message(stream_data)
+    x_message = generate_x_message(
+        stream_data,
+        STREAM_CONTEXT,
+        state.get("last_posts", [])
+    )
 
     print("")
     print("===== X MESSAGE =====")
@@ -558,6 +580,7 @@ def main():
         try:
             send_to_buffer(x_message)
             x_sent = True
+            save_last_post(state, x_message)
             print("✅ X message sent.")
         except Exception as e:
             x_sent = False
