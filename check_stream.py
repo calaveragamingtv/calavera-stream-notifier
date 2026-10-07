@@ -362,15 +362,31 @@ def main():
     
     print(f"Checking Twitch channel: {TWITCH_CHANNEL_NAME}")
 
-    twitch_token = get_twitch_token()
-    twitch_stream = get_stream_info(twitch_token)
+    twitch_stream = None
+    kick_stream = None
     
-    kick_token = get_kick_token()
-    kick_stream = get_kick_stream_info(kick_token)
+    twitch_error = None
+    kick_error = None
+    
+    # TWITCH
+    try:
+        twitch_token = get_twitch_token()
+        twitch_stream = get_stream_info(twitch_token)
+    except Exception as e:
+        twitch_error = str(e)
+    
+    # KICK
+    try:
+        kick_token = get_kick_token()
+        kick_stream = get_kick_stream_info(kick_token)
+    except Exception as e:
+        kick_error = str(e)
     
     print("")
     
-    if twitch_stream:
+    if twitch_error:
+        print(f"⚠️ Twitch API ERROR: {twitch_error}")
+    elif twitch_stream:
         print("🟢 Twitch is ONLINE")
         print(f"Twitch Stream ID: {twitch_stream['id']}")
         print(f"Twitch Title: {twitch_stream['title']}")
@@ -378,7 +394,9 @@ def main():
     else:
         print("🔴 Twitch is OFFLINE")
     
-    if kick_stream:
+    if kick_error:
+        print(f"⚠️ Kick API ERROR: {kick_error}")
+    elif kick_stream:
         print("🟢 Kick is ONLINE")
         print(f"Kick Broadcaster ID: {kick_stream['broadcaster_user_id']}")
         print(f"Kick Stream Data: {kick_stream}")
@@ -386,6 +404,19 @@ def main():
         print("🔴 Kick is OFFLINE")
     
     if twitch_stream is None and kick_stream is None:
+
+        if twitch_error and kick_error:
+            print("❌ Twitch y Kick tuvieron errores de API.")
+            return
+    
+        if twitch_error:
+            print("⚠️ Twitch tiene un error de API y Kick está OFFLINE.")
+            return
+    
+        if kick_error:
+            print("⚠️ Kick tiene un error de API y Twitch está OFFLINE.")
+            return
+    
         print("😴 Both platforms are OFFLINE")
         return
         
