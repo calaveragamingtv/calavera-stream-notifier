@@ -3,7 +3,7 @@
     "platform": "Twitch",
     "stream_id": "123456",
     "processed_at": "...",
-    "discord_sent": true,
-    "x_sent": true
+    "discord_sent": null,
+    "x_sent": null
   }
 }
