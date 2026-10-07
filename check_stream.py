@@ -417,12 +417,14 @@ def main():
 
     discord_sent = False
     x_sent = False
-    print("📢 Sending message to Discord...")
-
-    send_to_discord(discord_message)
-    discord_sent = True
-
-    print("✅ Discord message sent.")
+    
+    try:
+        send_to_discord(discord_message)
+        discord_sent = True
+        print("✅ Discord message sent.")
+    except Exception as e:
+        discord_sent = False
+        print(f"❌ Discord failed: {e}")
 
     # --------------------------------------------------
     # X
@@ -440,10 +442,13 @@ def main():
 
     print("🐦 Sending message to X via Buffer...")
 
-    send_to_buffer(x_message)
-    x_sent = True
-
-    print("✅ X message sent.")
+    try:
+        send_to_buffer(x_message)
+        x_sent = True
+        print("✅ X message sent.")
+    except Exception as e:
+        x_sent = False
+        print(f"❌ X failed: {e}")
 
     # --------------------------------------------------
     # SAVE STATE
