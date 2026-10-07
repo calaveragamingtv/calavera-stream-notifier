@@ -460,14 +460,20 @@ def main():
         return
     
     print("")
-    print(f"🚀 Processing new {platform} stream...")
+    
+    print(f"   Platform: {platform}")
+    print(f"   Stream ID: {stream_id}")
 
     stream_data = normalize_stream(platform, stream)
 
-    print("")
-    print("===== NORMALIZED STREAM =====")
-    print(stream_data)
-    print("=============================")
+    print_section("📺 STREAM DATA")
+
+    print(f"   Platform: {stream_data['platform']}")
+    print(f"   Channel: {stream_data['channel']}")
+    print(f"   Title: {stream_data['title']}")
+    print(f"   Game: {stream_data['game']}")
+    print(f"   Viewers: {stream_data['viewer_count']}")
+    print(f"   URL: {stream_data['url']}")
 
     
 
