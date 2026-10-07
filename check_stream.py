@@ -391,11 +391,11 @@ def validate_x_message(message, url):
 
     hashtag_count = message.count("#")
 
-    if hashtag_count < 2:
-        return False, "El mensaje tiene menos de 2 hashtags."
-
-    if hashtag_count > 4:
-        return False, "El mensaje tiene más de 4 hashtags."
+    if hashtag_count < 1:
+        return False, "El mensaje no tiene ningún hashtag."
+    
+    if hashtag_count > 2:
+        return False, "El mensaje tiene más de 2 hashtags."
 
     return True, "Mensaje válido."
 
