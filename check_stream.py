@@ -337,6 +337,26 @@ def send_to_buffer(message):
 
     print("✅ Message sent to X via Buffer.")
 
+def validate_x_message(message, url):
+    if not message:
+        return False, "El mensaje está vacío."
+
+    if len(message) > 220:
+        return False, f"El mensaje tiene {len(message)} caracteres."
+
+    if url not in message:
+        return False, "El mensaje no contiene el enlace del directo."
+
+    hashtag_count = message.count("#")
+
+    if hashtag_count < 2:
+        return False, "El mensaje tiene menos de 2 hashtags."
+
+    if hashtag_count > 4:
+        return False, "El mensaje tiene más de 4 hashtags."
+
+    return True, "Mensaje válido."
+
 
 def main():
     
@@ -440,15 +460,26 @@ def main():
     print("=====================")
     print("")
 
-    print("🐦 Sending message to X via Buffer...")
-
-    try:
-        send_to_buffer(x_message)
-        x_sent = True
-        print("✅ X message sent.")
-    except Exception as e:
+   is_valid, validation_message = validate_x_message(
+        x_message,
+        stream_data["url"]
+    )
+    
+    print(f"🔎 X validation: {validation_message}")
+    
+    if is_valid:
+        print("🐦 Sending message to X via Buffer...")
+    
+        try:
+            send_to_buffer(x_message)
+            x_sent = True
+            print("✅ X message sent.")
+        except Exception as e:
+            x_sent = False
+            print(f"❌ X failed: {e}")
+    else:
         x_sent = False
-        print(f"❌ X failed: {e}")
+        print("❌ X message rejected. It will NOT be published.")
 
     # --------------------------------------------------
     # SAVE STATE
