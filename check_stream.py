@@ -448,7 +448,9 @@ def main():
     state["last_event"] = {
         "platform": platform,
         "stream_id": stream_id,
-        "processed_at": datetime.now(timezone.utc).isoformat()
+        "processed_at": datetime.now(timezone.utc).isoformat(),
+        "discord_sent": True,
+        "x_sent": True
     }
 
     save_state(state)
