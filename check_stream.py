@@ -445,14 +445,17 @@ def main():
     else:
         return
 
-    print(f"📡 Selected platform: {platform}")
-    print(f"📡 Selected stream ID: {stream_id}")
-    
+    print_section("🎯 STREAM SELECTED")
+
+    print(f"   Platform: {platform}")
+    print(f"   Stream ID: {stream_id}")
+        
     state = load_state()
     
     if not should_process(state):
         return
     
+    print("")
     print(f"🚀 Processing new {platform} stream...")
 
     stream_data = normalize_stream(platform, stream)
