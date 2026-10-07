@@ -1,10 +1,15 @@
 {
   "last_event": {
-    "platform": null,
-    "stream_id": null,
-    "started_at": null,
-    "processed_at": null
+    "platform": "twitch",
+    "stream_id": "318912211814",
+    "processed_at": "2026-10-07T15:45:49.480395+00:00",
+    "discord_sent": true,
+    "x_sent": true
   },
-  "last_messages": [],
-  "last_posts": []
+  "last_messages": [
+    "@everyone \u00bfHasta d\u00f3nde vamos a llegar hoy en este highpop con 6 d\u00edas adentro? Arranc\u00e1 la PC y pasate por el chat a tirar una idea o criticar c\u00f3mo estamos jugando. https://twitch.tv/oilrats \ud83d\udc80"
+  ],
+  "last_posts": [
+    "D\u00eda 6 en highpop y esto es un delirio total. Ya somos banda en el chat, pas\u00e1 a tirar fruta o a putearme si manco. #Rust https://twitch.tv/oilrats"
+  ]
 }
