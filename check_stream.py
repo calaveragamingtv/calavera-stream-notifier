@@ -167,26 +167,29 @@ def already_processed(state, platform, stream_id):
     return False
 
 def normalize_stream(platform, stream):
+
     if platform == "twitch":
         return {
             "platform": "Twitch",
+            "channel": TWITCH_CHANNEL_NAME,
             "stream_id": stream["id"],
             "title": stream["title"],
             "viewer_count": stream["viewer_count"],
-            "game": "Rust",
+            "game": stream["game_name"],
             "url": f"https://twitch.tv/{TWITCH_CHANNEL_NAME}"
         }
 
     if platform == "kick":
         return {
             "platform": "Kick",
+            "channel": KICK_CHANNEL_SLUG,
             "stream_id": f"kick-{stream['broadcaster_user_id']}-{stream['stream']['start_time']}",
             "title": stream["stream_title"],
             "viewer_count": stream["stream"]["viewer_count"],
             "game": stream["category"]["name"],
-            "url": f"https://kick.com/{KICK_CHANNEL_SLUG.lower()}"
+            "url": f"https://kick.com/{KICK_CHANNEL_SLUG}"
         }
-
+    
     raise ValueError(f"Unknown platform: {platform}")
 
 def generate_discord_message(stream_data):
