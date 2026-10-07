@@ -418,18 +418,22 @@ def main():
     if twitch_stream is None and kick_stream is None:
 
         if twitch_error and kick_error:
-            print("❌ Twitch y Kick tuvieron errores de API.")
+            print_section("📊 RESULT")
+            print("   ❌ Twitch and Kick API errors.")
             return
     
         if twitch_error:
-            print("⚠️ Twitch tiene un error de API y Kick está OFFLINE.")
+            print_section("📊 RESULT")
+            print("   ⚠️ Twitch API error. Kick is offline.")
             return
     
         if kick_error:
-            print("⚠️ Kick tiene un error de API y Twitch está OFFLINE.")
+            print_section("📊 RESULT")
+            print("   ⚠️ Kick API error. Twitch is offline.")
             return
     
-        print("😴 Both platforms are OFFLINE")
+        print_section("📊 RESULT")
+        print("   😴 No active stream found.")
         return
         
     if twitch_stream:
