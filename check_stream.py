@@ -22,6 +22,8 @@ STATE_FILE = "stream_state.json"
 COOLDOWN_HOURS = 14
 
 GEMINI_MODEL = "gemini-3.5-flash-lite"
+STREAM_CONTEXT = ""
+
 
 
 def get_twitch_token():
@@ -116,11 +118,17 @@ def load_state():
                 "stream_id": None,
                 "started_at": None,
                 "processed_at": None
-            }
+            },
+            "last_messages": []
         }
 
     with open(STATE_FILE, "r", encoding="utf-8") as file:
-        return json.load(file)
+        state = json.load(file)
+
+    if "last_messages" not in state:
+        state["last_messages"] = []
+
+    return state
 
 def load_prompt(filename):
     prompt_path = os.path.join("prompt", filename)
@@ -131,6 +139,11 @@ def load_prompt(filename):
 def save_state(state):
     with open(STATE_FILE, "w", encoding="utf-8") as file:
         json.dump(state, file, indent=2)
+
+def save_last_message(state, message):
+    messages = state.get("last_messages", [])
+    messages.append(message)
+    state["last_messages"] = messages[-5:]
 
 
 def should_process(state):
@@ -192,8 +205,15 @@ def normalize_stream(platform, stream):
     
     raise ValueError(f"Unknown platform: {platform}")
 
-def generate_discord_message(stream_data):
+def generate_discord_message(stream_data, context, last_messages):
     prompt_template = load_prompt("discord_prompt.txt")
+
+    last_messages_text = "\n".join(
+        f"- {message}" for message in last_messages
+    )
+
+    if not last_messages_text:
+        last_messages_text = "(No hay avisos anteriores.)"
 
     prompt = prompt_template.format(
         platform=stream_data["platform"],
@@ -204,8 +224,9 @@ def generate_discord_message(stream_data):
         ),
         title=stream_data["title"],
         game=stream_data["game"],
-        viewer_count=stream_data["viewer_count"],
-        url=stream_data["url"]
+        url=stream_data["url"],
+        context=context,
+        last_messages=last_messages_text
     )
 
     response = requests.post(
@@ -486,7 +507,11 @@ def main():
 
     print("🤖 Generating Discord message with Gemini...")
 
-    discord_message = generate_discord_message(stream_data)
+    discord_message = generate_discord_message(
+        stream_data,
+        STREAM_CONTEXT,
+        state.get("last_messages", [])
+    )
 
     print("")
     print("===== DISCORD MESSAGE =====")
@@ -500,6 +525,7 @@ def main():
     try:
         send_to_discord(discord_message)
         discord_sent = True
+        save_last_message(state, discord_message)
         print("✅ Discord message sent.")
     except Exception as e:
         discord_sent = False
