@@ -377,7 +377,7 @@ def main():
     elif kick_stream:
         platform = "kick"
         stream = kick_stream
-        stream_id = kick_stream["id"]
+        stream_id = f"kick-{kick_stream['broadcaster_user_id']}-{kick_stream['stream']['start_time']}"
     
     else:
         return
