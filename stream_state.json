@@ -1,9 +1,9 @@
 {
   "last_event": {
-    "platform": "twitch",
-    "stream_id": "319479919959",
-    "processed_at": "2026-10-07T03:13:39.710106+00:00",
-    "discord_sent": true,
-    "x_sent": true
-  }
+    "platform": null,
+    "stream_id": null,
+    "started_at": null,
+    "processed_at": null
+  },
+  "last_messages": []
 }
