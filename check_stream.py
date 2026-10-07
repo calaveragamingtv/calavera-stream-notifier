@@ -415,9 +415,12 @@ def main():
     print("===========================")
     print("")
 
+    discord_sent = False
+    x_sent = False
     print("📢 Sending message to Discord...")
 
     send_to_discord(discord_message)
+    discord_sent = True
 
     print("✅ Discord message sent.")
 
@@ -438,6 +441,7 @@ def main():
     print("🐦 Sending message to X via Buffer...")
 
     send_to_buffer(x_message)
+    x_sent = True
 
     print("✅ X message sent.")
 
@@ -449,8 +453,8 @@ def main():
         "platform": platform,
         "stream_id": stream_id,
         "processed_at": datetime.now(timezone.utc).isoformat(),
-        "discord_sent": True,
-        "x_sent": True
+        "discord_sent": discord_sent,
+        "x_sent": x_sent
     }
 
     save_state(state)
