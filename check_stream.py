@@ -22,8 +22,6 @@ STATE_FILE = "stream_state.json"
 COOLDOWN_HOURS = 14
 
 GEMINI_MODEL = "gemini-3.5-flash-lite"
-STREAM_CONTEXT = ""
-
 
 
 def get_twitch_token():
@@ -527,7 +525,7 @@ def main():
 
     discord_message = generate_discord_message(
         stream_data,
-        STREAM_CONTEXT,
+        stream_data["title"],
         state.get("last_messages", [])
     )
 
@@ -557,7 +555,7 @@ def main():
 
     x_message = generate_x_message(
         stream_data,
-        STREAM_CONTEXT,
+        stream_data["title"],
         state.get("last_posts", [])
     )
 
