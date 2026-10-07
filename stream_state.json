@@ -1,8 +1,8 @@
 {
   "last_event": {
-    "platform": "Twitch",
-    "stream_id": "123456",
-    "processed_at": "...",
+    "platform": null,
+    "stream_id": null,
+    "processed_at": null,
     "discord_sent": null,
     "x_sent": null
   }
