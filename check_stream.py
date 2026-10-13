@@ -22,6 +22,8 @@ STATE_FILE = "stream_state.json"
 COOLDOWN_HOURS = 14
 
 GEMINI_MODEL = "gemini-3.5-flash-lite"
+POST_HISTORY_FILE = "data/post_history.json"
+HISTORY_DAYS = 7
 
 
 def get_twitch_token():
@@ -141,6 +143,52 @@ def load_prompt(filename):
 def save_state(state):
     with open(STATE_FILE, "w", encoding="utf-8") as file:
         json.dump(state, file, indent=2)
+
+
+def load_post_history():
+    if not os.path.exists(POST_HISTORY_FILE):
+        return {
+            "discord": [],
+            "x": []
+        }
+
+    with open(POST_HISTORY_FILE, "r", encoding="utf-8") as file:
+        history = json.load(file)
+
+    history.setdefault("discord", [])
+    history.setdefault("x", [])
+
+    return history
+
+
+def save_post_history(history):
+    os.makedirs(os.path.dirname(POST_HISTORY_FILE), exist_ok=True)
+
+    with open(POST_HISTORY_FILE, "w", encoding="utf-8") as file:
+        json.dump(history, file, indent=2, ensure_ascii=False)
+
+
+def add_post_to_history(history, platform, message):
+    if platform not in ("discord", "x"):
+        raise ValueError(f"Unknown history platform: {platform}")
+
+    now = datetime.now(timezone.utc)
+
+    posts = history.get(platform, [])
+    posts.append({
+        "message": message,
+        "posted_at": now.isoformat()
+    })
+
+    cutoff = now - timedelta(days=HISTORY_DAYS)
+
+    history[platform] = [
+        post for post in posts
+        if datetime.fromisoformat(post["posted_at"]) >= cutoff
+    ]
+
+    save_post_history(history)
+
 
 def save_last_post(state, post):
     posts = state.get("last_posts", [])
@@ -495,6 +543,7 @@ def main():
     print(f"   Stream ID: {stream_id}")
         
     state = load_state()
+    post_history = load_post_history()
     
     if not should_process(state):
         return
@@ -520,13 +569,18 @@ def main():
     # --------------------------------------------------
     # DISCORD
     # --------------------------------------------------
-
+    
     print("🤖 Generating Discord message with Gemini...")
-
+    
+    discord_messages = [
+        item["message"]
+        for item in post_history.get("discord", [])
+    ]
+    
     discord_message = generate_discord_message(
         stream_data,
         stream_data["title"],
-        state.get("last_messages", [])
+        discord_messages
     )
 
     print("")
@@ -542,6 +596,11 @@ def main():
         send_to_discord(discord_message)
         discord_sent = True
         save_last_message(state, discord_message)
+        add_post_to_history(
+            post_history,
+            "discord",
+            discord_message
+        )
         print("✅ Discord message sent.")
     except Exception as e:
         discord_sent = False
@@ -552,11 +611,15 @@ def main():
     # --------------------------------------------------
 
     print("🤖 Generating X message with Gemini...")
+    x_posts = [
+        item["message"]
+        for item in post_history.get("x", [])
+    ]
 
     x_message = generate_x_message(
         stream_data,
         stream_data["title"],
-        state.get("last_posts", [])
+        x_posts
     )
 
     print("")
@@ -579,6 +642,11 @@ def main():
             send_to_buffer(x_message)
             x_sent = True
             save_last_post(state, x_message)
+            add_post_to_history(
+                post_history,
+                "x",
+                x_message
+            )
             print("✅ X message sent.")
         except Exception as e:
             x_sent = False
