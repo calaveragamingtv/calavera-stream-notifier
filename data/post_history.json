@@ -1,14 +1,6 @@
 {
   "discord": [
     {
-      "message": "@everyone ¿Nos hacemos los reyes del PvP y PvE con una raid o nos terminan raideando a nosotros antes de arrancar? Pasen por el chat a tirar ideas y armar estrategia entre todos. https://twitch.tv/CalaveraGamingTV 💀🎮",
-      "posted_at": "2026-10-24T22:15:59.677374+00:00"
-    },
-    {
-      "message": "@everyone Arrancamos este lunes de rust de gorditos sebados con toda la actitud en el mapa. Pásense por el chat a tirar buenas ideas y acompañar este arranque de semana. https://twitch.tv/CalaveraGamingTV 💀🎮",
-      "posted_at": "2026-10-26T21:31:21.701403+00:00"
-    },
-    {
       "message": "@everyone ¿Sale snowball hoy o nos mandamos flor de fruta apenas caemos en la playa? Pásense por el chat a tirar alguna idea antes de que nos armemos lazos para atar con alambre. https://twitch.tv/CalaveraGamingTV 💀🎯",
       "posted_at": "2026-10-28T21:01:39.734278+00:00"
     },
@@ -23,13 +15,13 @@
     {
       "message": "@everyone Es sábado de snowball y arrancamos con una roca y muchas ganas de arruinarle el día al primero que encontremos, o de terminar en pelotas en la playa en diez segundos. Pásense por el chat a tirar tácticas falopa o a ver cómo nos raidean la choza. https://twitch.tv/CalaveraGamingTV 💀🧊",
       "posted_at": "2026-10-31T22:01:25.694981+00:00"
+    },
+    {
+      "message": "@everyone Arrancamos este lunes de rust del bueno del mejor del calaveramingtv con toda la actitud en el servidor. Pasen por el chat a tirar alguna idea para ver cómo encaramos la sesión de hoy. https://twitch.tv/CalaveraGamingTV 💀🎮",
+      "posted_at": "2026-11-02T21:31:21.739811+00:00"
     }
   ],
   "x": [
-    {
-      "message": "¿Armamos tremenda base hoy con PvP, PvE y raid incluida o nos raidean antes de armar el primer muro? Pasen a tirar estrategia al chat. 💀 #Rust https://twitch.tv/CalaveraGamingTV",
-      "posted_at": "2026-10-24T22:16:04.838202+00:00"
-    },
     {
       "message": "¿Lunes de gorditos sebados o papelón asegurado en el wipe? Pasen a tirar estrategias al chat. 💀 #Rust https://twitch.tv/CalaveraGamingTV",
       "posted_at": "2026-10-26T21:31:23.760495+00:00"
@@ -49,6 +41,10 @@
     {
       "message": "¿Salva la roca y sale snowball o nos mandamos terrible papelón en la playa? Pasen a tirar ideas al chat. 💀 #Rust https://twitch.tv/CalaveraGamingTV",
       "posted_at": "2026-10-31T22:01:27.806594+00:00"
+    },
+    {
+      "message": "Lunes de rust del bueno con el calaveramingtv 💀 #Rust https://twitch.tv/CalaveraGamingTV",
+      "posted_at": "2026-11-02T21:31:23.730150+00:00"
     }
   ]
 }
