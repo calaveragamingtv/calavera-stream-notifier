@@ -1,39 +1,19 @@
 {
   "discord": [
     {
-      "message": "@everyone Arrancó el segundo día de Rust y es puro raid de los buenos, bien peladuchis. Pásense por el chat a tirar alguna táctica para ver si sobrevivimos o nos vuelven a mandar a la playa. https://twitch.tv/CalaveraGamingTV 💀⛏️",
-      "posted_at": "2026-10-30T21:15:56.664437+00:00"
-    },
-    {
-      "message": "@everyone Es sábado de snowball y arrancamos con una roca y muchas ganas de arruinarle el día al primero que encontremos, o de terminar en pelotas en la playa en diez segundos. Pásense por el chat a tirar tácticas falopa o a ver cómo nos raidean la choza. https://twitch.tv/CalaveraGamingTV 💀🧊",
-      "posted_at": "2026-10-31T22:01:25.694981+00:00"
-    },
-    {
-      "message": "@everyone Arrancamos este lunes de rust del bueno del mejor del calaveramingtv con toda la actitud en el servidor. Pasen por el chat a tirar alguna idea para ver cómo encaramos la sesión de hoy. https://twitch.tv/CalaveraGamingTV 💀🎮",
-      "posted_at": "2026-11-02T21:31:21.739811+00:00"
-    },
-    {
       "message": "@everyone ¿Arrancamos este wipe para gorditos armando una choza decente o nos mandan a la playa en cinco minutos? Pásense por el chat a tirar alguna idea antes",
       "posted_at": "2026-11-05T21:01:29.451305+00:00"
     },
     {
       "message": "@everyone Nos raidearon toda la base en el Día 2 de Rust, pero la idea es levantarnos y salir adelante como sea. Pásense por el chat a tirar alguna idea o a ver cómo nos va en este desastre. https://twitch.tv/CalaveraGamingTV 💀⛏️",
       "posted_at": "2026-11-06T18:45:48.135607+00:00"
+    },
+    {
+      "message": "@everyone Arrancó el jueves de wipe y la única certeza es que nos van a culear duro en cuanto pongamos un pie afuera. Pásense por el chat a tirar alguna idea para ver si zafamos o terminamos en pelotas en la playa. https://twitch.tv/CalaveraGamingTV 💀⛏️",
+      "posted_at": "2026-11-12T20:31:31.544850+00:00"
     }
   ],
   "x": [
-    {
-      "message": "¿Día 2 y ya estamos a los tiros limpios y sin ropa? Pasen a dejar ideas al chat para defender la base 💀 #Rust https://twitch.tv/CalaveraGamingTV",
-      "posted_at": "2026-10-30T21:15:58.992616+00:00"
-    },
-    {
-      "message": "¿Salva la roca y sale snowball o nos mandamos terrible papelón en la playa? Pasen a tirar ideas al chat. 💀 #Rust https://twitch.tv/CalaveraGamingTV",
-      "posted_at": "2026-10-31T22:01:27.806594+00:00"
-    },
-    {
-      "message": "Lunes de rust del bueno con el calaveramingtv 💀 #Rust https://twitch.tv/CalaveraGamingTV",
-      "posted_at": "2026-11-02T21:31:23.730150+00:00"
-    },
     {
       "message": "Arrancó el Rust Wipe para gorditos y la base ya es un delirio total. 💀 #Rust https://twitch.tv/CalaveraGamingTV",
       "posted_at": "2026-11-05T21:01:32.280795+00:00"
@@ -41,6 +21,10 @@
     {
       "message": "Nos reventaron la base en el día 2, pero ya armamos la opereta para recuperar todo y volver arriba wacho. 💀 #Rust https://twitch.tv/CalaveraGamingTV",
       "posted_at": "2026-11-06T18:45:50.281373+00:00"
+    },
+    {
+      "message": "Jueves de wipe y ya arrancamos picantes. 💀 #Rust https://twitch.tv/CalaveraGamingTV",
+      "posted_at": "2026-11-12T20:31:36.828565+00:00"
     }
   ]
 }
