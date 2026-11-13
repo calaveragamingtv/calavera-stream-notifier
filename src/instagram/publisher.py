@@ -1,4 +1,3 @@
-
 import argparse
 import os
 import sys
@@ -6,12 +5,10 @@ from pathlib import Path
 
 from instagrapi import Client
 
-
-SUPPORTED_PHOTO = {".jpg", ".jpeg"}
-SUPPORTED_VIDEO = {".mp4"}
+from .config import PROJECT_ROOT, load_config
 
 
-def validate_file(path: Path) -> str:
+def validate_file(path: Path, config: dict) -> str:
     if not path.exists():
         raise FileNotFoundError(f"File not found: {path}")
 
@@ -20,29 +17,27 @@ def validate_file(path: Path) -> str:
 
     extension = path.suffix.lower()
 
-    if extension in SUPPORTED_PHOTO:
+    if extension in config["supported_images"]:
         return "photo"
 
-    if extension in SUPPORTED_VIDEO:
+    if extension in config["supported_videos"]:
         return "video"
 
     raise ValueError(
-        f"Unsupported format: {extension}. "
-        "Supported formats: JPG, JPEG, MP4."
+        f"Unsupported format: {extension}"
     )
 
 
-def publish_story(path: Path, caption: str = "") -> None:
+def publish_story(path: Path, media_type: str, config: dict):
     username = os.getenv("IG_USERNAME")
     password = os.getenv("IG_PASSWORD")
-    session_file = Path(
-        os.getenv("IG_SESSION_FILE", "instagram/session.json")
-    )
 
     if not username or not password:
         raise ValueError(
             "Missing IG_USERNAME or IG_PASSWORD environment variables."
         )
+
+    session_file = PROJECT_ROOT / config["session_file"]
 
     client = Client()
 
@@ -56,61 +51,48 @@ def publish_story(path: Path, caption: str = "") -> None:
     session_file.parent.mkdir(parents=True, exist_ok=True)
     client.dump_settings(session_file)
 
-    media_type = validate_file(path)
-
     print(f"[INSTAGRAM] Publishing {media_type} story...")
 
     if media_type == "photo":
-        story = client.photo_upload_to_story(
-            path,
-            caption=caption,
-        )
+        story = client.photo_upload_to_story(path)
     else:
-        story = client.video_upload_to_story(
-            path,
-            caption=caption,
-        )
+        story = client.video_upload_to_story(path)
 
-    print(f"[INSTAGRAM] Story published successfully. ID: {story.pk}")
+    print(
+        f"[INSTAGRAM] Story published successfully. ID: {story.pk}"
+    )
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Publish an image or video to Instagram Stories."
+        description="Instagram Stories Publisher"
     )
 
     parser.add_argument(
         "--file",
         required=True,
         type=Path,
-        help="Image or video file to publish.",
-    )
-
-    parser.add_argument(
-        "--caption",
-        default="",
-        help="Optional story caption.",
-    )
-
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Validate the file without connecting to Instagram.",
+        help="Image or video file to publish."
     )
 
     args = parser.parse_args()
 
     try:
-        media_type = validate_file(args.file)
+        config = load_config()
+
+        media_type = validate_file(args.file, config)
 
         print(f"[INSTAGRAM] File: {args.file}")
         print(f"[INSTAGRAM] Media type: {media_type}")
 
-        if args.dry_run:
-            print("[INSTAGRAM] Dry run successful. Nothing was published.")
+        if config["dry_run"]:
+            print(
+                "[INSTAGRAM] DRY RUN enabled. "
+                "Validation successful. Nothing was published."
+            )
             return 0
 
-        publish_story(args.file, args.caption)
+        publish_story(args.file, media_type, config)
         return 0
 
     except Exception as error:
