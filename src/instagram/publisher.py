@@ -46,7 +46,7 @@ def publish_story(path: Path, media_type: str, config: dict):
         client.load_settings(session_file)
 
     print("[INSTAGRAM] Logging in...")
-    client.login(username, password)
+    client.login_legacy(username, password)
 
     session_file.parent.mkdir(parents=True, exist_ok=True)
     client.dump_settings(session_file)
