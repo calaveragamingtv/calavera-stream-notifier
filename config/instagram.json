@@ -1,6 +1,6 @@
 
 {
-    "dry_run": true,
+    "dry_run": false,
     "session_file": "instagram_session.json",
     "supported_images": [
         ".jpg",
