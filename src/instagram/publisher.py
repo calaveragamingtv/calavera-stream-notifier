@@ -28,25 +28,20 @@ def validate_file(path: Path, config: dict) -> str:
     )
 
 
-def publish_story(path: Path, media_type: str, config: dict):
-    username = os.getenv("IG_USERNAME")
-    password = os.getenv("IG_PASSWORD")
 
-    if not username or not password:
-        raise ValueError(
-            "Missing IG_USERNAME or IG_PASSWORD environment variables."
-        )
+def publish_story(path: Path, media_type: str, config: dict):
+    session_id = os.getenv("IG_SESSIONID")
+
+    if not session_id:
+        raise ValueError("Missing IG_SESSIONID environment variable.")
 
     session_file = PROJECT_ROOT / config["session_file"]
 
     client = Client()
 
-    if session_file.exists():
-        print("[INSTAGRAM] Loading saved session...")
-        client.load_settings(session_file)
+    print("[INSTAGRAM] Authenticating with session ID...")
 
-    print("[INSTAGRAM] Logging in...")
-    client.login_legacy(username, password)
+    client.login_by_sessionid(session_id)
 
     session_file.parent.mkdir(parents=True, exist_ok=True)
     client.dump_settings(session_file)
@@ -61,6 +56,7 @@ def publish_story(path: Path, media_type: str, config: dict):
     print(
         f"[INSTAGRAM] Story published successfully. ID: {story.pk}"
     )
+
 
 
 def main() -> int:
