@@ -1,35 +1,53 @@
+
 import argparse
 import os
-import sys
 from pathlib import Path
 
 from instagrapi import Client
 
-from .config import PROJECT_ROOT, load_config
+from src.instagram.config import load_config
 
 
-def validate_file(path: Path, config: dict) -> str:
-    if not path.exists():
-        raise FileNotFoundError(f"File not found: {path}")
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-    if not path.is_file():
-        raise ValueError(f"Not a file: {path}")
-
-    extension = path.suffix.lower()
-
-    if extension in config["supported_images"]:
-        return "photo"
-
-    if extension in config["supported_videos"]:
-        return "video"
-
-    raise ValueError(
-        f"Unsupported format: {extension}"
-    )
+STORY_ASSETS = {
+    "twitch": "assets/instagram/on_twitch.mp4",
+    "kick": "assets/instagram/on_kick.mp4",
+}
 
 
+def publish_story(platform: str, config: dict):
+    platform = platform.lower().strip()
 
-def publish_story(path: Path, media_type: str, config: dict):
+    if platform not in STORY_ASSETS:
+        raise ValueError(
+            f"Unsupported platform: {platform}. "
+            f"Supported platforms: {', '.join(STORY_ASSETS)}"
+        )
+
+    media_file = PROJECT_ROOT / STORY_ASSETS[platform]
+
+    if not media_file.is_file():
+        raise FileNotFoundError(
+            f"Instagram Story asset not found: {media_file}"
+        )
+
+    if media_file.suffix.lower() not in config["supported_videos"]:
+        raise ValueError(
+            f"Unsupported video format: {media_file.suffix}"
+        )
+
+    print(f"[INSTAGRAM] Platform: {platform}")
+    print(f"[INSTAGRAM] File: {media_file}")
+    print("[INSTAGRAM] Media type: video")
+
+    if config["dry_run"]:
+        print(
+            "[INSTAGRAM] DRY RUN enabled. "
+            "Validation successful. Nothing was published."
+        )
+        return
+
     session_id = os.getenv("IG_SESSIONID")
 
     if not session_id:
@@ -40,61 +58,38 @@ def publish_story(path: Path, media_type: str, config: dict):
     client = Client()
 
     print("[INSTAGRAM] Authenticating with session ID...")
-
     client.login_by_sessionid(session_id)
 
     session_file.parent.mkdir(parents=True, exist_ok=True)
     client.dump_settings(session_file)
 
-    print(f"[INSTAGRAM] Publishing {media_type} story...")
+    print(f"[INSTAGRAM] Publishing {platform} Story...")
 
-    if media_type == "photo":
-        story = client.photo_upload_to_story(path)
-    else:
-        story = client.video_upload_to_story(path)
+    story = client.video_upload_to_story(media_file)
 
     print(
         f"[INSTAGRAM] Story published successfully. ID: {story.pk}"
     )
 
 
-
-def main() -> int:
+def main():
     parser = argparse.ArgumentParser(
-        description="Instagram Stories Publisher"
+        description="Publish a platform-specific Instagram Story."
     )
 
     parser.add_argument(
-        "--file",
+        "--platform",
         required=True,
-        type=Path,
-        help="Image or video file to publish."
+        choices=sorted(STORY_ASSETS.keys()),
+        help="Streaming platform: twitch or kick"
     )
 
     args = parser.parse_args()
 
-    try:
-        config = load_config()
+    config = load_config()
 
-        media_type = validate_file(args.file, config)
-
-        print(f"[INSTAGRAM] File: {args.file}")
-        print(f"[INSTAGRAM] Media type: {media_type}")
-
-        if config["dry_run"]:
-            print(
-                "[INSTAGRAM] DRY RUN enabled. "
-                "Validation successful. Nothing was published."
-            )
-            return 0
-
-        publish_story(args.file, media_type, config)
-        return 0
-
-    except Exception as error:
-        print(f"[INSTAGRAM] ERROR: {error}", file=sys.stderr)
-        return 1
+    publish_story(args.platform, config)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
