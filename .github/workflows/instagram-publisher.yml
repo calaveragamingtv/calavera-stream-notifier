@@ -28,6 +28,21 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r src/instagram/requirements.txt
 
+      - name: Install MoviePy
+        run: |
+          pip install --no-deps "moviepy==2.2.1"
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Verify dependencies
+        run: |
+          pip show instagrapi
+          pip show moviepy
+          ffmpeg -version
+
       - name: Publish Instagram Story
         env:
           IG_SESSIONID: ${{ secrets.IG_SESSIONID }}
