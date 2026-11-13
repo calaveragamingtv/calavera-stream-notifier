@@ -1,3 +1,4 @@
+
 import os
 import json
 from datetime import datetime, timezone, timedelta
@@ -14,7 +15,6 @@ BUFFER_API_KEY = os.environ["BUFFER_API_KEY"]
 BUFFER_CHANNEL_ID = "6a987c1f065799be4676bb2a"
 KICK_CLIENT_ID = os.environ["KICK_CLIENT_ID"]
 KICK_CLIENT_SECRET = os.environ["KICK_CLIENT_SECRET"]
-
 TWITCH_CHANNEL_NAME = "CalaveraGamingTV"
 KICK_CHANNEL_SLUG = "CalaveraGamingTV"
 
@@ -63,7 +63,8 @@ def get_stream_info(token):
         return None
 
     return data[0]
-    
+
+
 def get_kick_token():
     response = requests.post(
         "https://id.kick.com/oauth/token",
@@ -128,17 +129,19 @@ def load_state():
 
     if "last_messages" not in state:
         state["last_messages"] = []
-        
+
     if "last_posts" not in state:
         state["last_posts"] = []
 
     return state
+
 
 def load_prompt(filename):
     prompt_path = os.path.join("prompt", filename)
 
     with open(prompt_path, "r", encoding="utf-8") as file:
         return file.read()
+
 
 def save_state(state):
     with open(STATE_FILE, "w", encoding="utf-8") as file:
@@ -175,6 +178,7 @@ def add_post_to_history(history, platform, message):
     now = datetime.now(timezone.utc)
 
     posts = history.get(platform, [])
+
     posts.append({
         "message": message,
         "posted_at": now.isoformat()
@@ -194,6 +198,7 @@ def save_last_post(state, post):
     posts = state.get("last_posts", [])
     posts.append(post)
     state["last_posts"] = posts[-5:]
+
 
 def save_last_message(state, message):
     messages = state.get("last_messages", [])
@@ -221,21 +226,22 @@ def should_process(state):
         return False
 
     return True
-    
+
 
 def already_processed(state, platform, stream_id):
     last_event = state.get("last_event", {})
 
-    if last_event.get("platform") == platform and \
-       last_event.get("stream_id") == stream_id:
-
+    if (
+        last_event.get("platform") == platform
+        and last_event.get("stream_id") == stream_id
+    ):
         print("⏭️ This stream event was already processed.")
         return True
 
     return False
 
-def normalize_stream(platform, stream):
 
+def normalize_stream(platform, stream):
     if platform == "twitch":
         return {
             "platform": "Twitch",
@@ -251,14 +257,18 @@ def normalize_stream(platform, stream):
         return {
             "platform": "Kick",
             "channel": KICK_CHANNEL_SLUG,
-            "stream_id": f"kick-{stream['broadcaster_user_id']}-{stream['stream']['start_time']}",
+            "stream_id": (
+                f"kick-{stream['broadcaster_user_id']}-"
+                f"{stream['stream']['start_time']}"
+            ),
             "title": stream["stream_title"],
             "viewer_count": stream["stream"]["viewer_count"],
             "game": stream["category"]["name"],
             "url": f"https://kick.com/{KICK_CHANNEL_SLUG}"
         }
-    
+
     raise ValueError(f"Unknown platform: {platform}")
+
 
 def generate_discord_message(stream_data, context, last_messages):
     prompt_template = load_prompt("discord_prompt.txt")
@@ -310,6 +320,7 @@ def generate_discord_message(stream_data, context, last_messages):
 
     return data["candidates"][0]["content"]["parts"][0]["text"].strip()
 
+
 def generate_x_message(stream_data, context, last_posts):
     prompt_template = load_prompt("x_prompt.txt")
 
@@ -360,6 +371,7 @@ def generate_x_message(stream_data, context, last_posts):
     data = response.json()
 
     return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+
 
 def send_to_discord(message):
     response = requests.post(
@@ -425,6 +437,7 @@ def send_to_buffer(message):
 
     print("✅ Message sent to X via Buffer.")
 
+
 def validate_x_message(message, url):
     if not message:
         return False, "El mensaje está vacío."
@@ -439,11 +452,12 @@ def validate_x_message(message, url):
 
     if hashtag_count < 1:
         return False, "El mensaje no tiene ningún hashtag."
-    
+
     if hashtag_count > 2:
         return False, "El mensaje tiene más de 2 hashtags."
 
     return True, "Mensaje válido."
+
 
 def print_section(title):
     print("")
@@ -453,36 +467,36 @@ def print_section(title):
 
 
 def main():
-    
+
     print_section("🎬 CALAVERA STREAM NOTIFIER")
     print(f"📡 Checking Twitch channel: {TWITCH_CHANNEL_NAME}")
 
     twitch_stream = None
     kick_stream = None
-    
+
     twitch_error = None
     kick_error = None
 
     print_section("📡 CHECKING PLATFORMS")
-    
+
     # TWITCH
     try:
         twitch_token = get_twitch_token()
         twitch_stream = get_stream_info(twitch_token)
     except Exception as e:
         twitch_error = str(e)
-    
+
     # KICK
     try:
         kick_token = get_kick_token()
         kick_stream = get_kick_stream_info(kick_token)
     except Exception as e:
         kick_error = str(e)
-    
+
     print("")
-    
+
     if twitch_error:
-        print(f"   Twitch: ⚠️ API ERROR")
+        print("   Twitch: ⚠️ API ERROR")
         print(f"   └─ {twitch_error}")
     elif twitch_stream:
         print("   Twitch: 🟢 ONLINE")
@@ -491,9 +505,9 @@ def main():
         print(f"   └─ Viewers: {twitch_stream['viewer_count']}")
     else:
         print("   Twitch: 🔴 OFFLINE")
-    
+
     if kick_error:
-        print(f"   Kick:   ⚠️ API ERROR")
+        print("   Kick:   ⚠️ API ERROR")
         print(f"   └─ {kick_error}")
     elif kick_stream:
         print("   Kick:   🟢 ONLINE")
@@ -502,38 +516,41 @@ def main():
         print(f"   └─ Viewers: {kick_stream['stream']['viewer_count']}")
     else:
         print("   Kick:   🔴 OFFLINE")
-    
-    if twitch_stream is None and kick_stream is None:
 
+    if twitch_stream is None and kick_stream is None:
         if twitch_error and kick_error:
             print_section("📊 RESULT")
             print("   ❌ Twitch and Kick API errors.")
             return
-    
+
         if twitch_error:
             print_section("📊 RESULT")
             print("   ⚠️ Twitch API error. Kick is offline.")
             return
-    
+
         if kick_error:
             print_section("📊 RESULT")
             print("   ⚠️ Kick API error. Twitch is offline.")
             return
-    
+
         print_section("📊 RESULT")
         print("   😴 No active stream found.")
         return
-        
+
+    # Twitch mantiene prioridad cuando ambas plataformas están online.
     if twitch_stream:
         platform = "twitch"
         stream = twitch_stream
         stream_id = twitch_stream["id"]
-    
+
     elif kick_stream:
         platform = "kick"
         stream = kick_stream
-        stream_id = f"kick-{kick_stream['broadcaster_user_id']}-{kick_stream['stream']['start_time']}"
-    
+        stream_id = (
+            f"kick-{kick_stream['broadcaster_user_id']}-"
+            f"{kick_stream['stream']['start_time']}"
+        )
+
     else:
         return
 
@@ -541,22 +558,20 @@ def main():
 
     print(f"   Platform: {platform}")
     print(f"   Stream ID: {stream_id}")
-        
+
     state = load_state()
     post_history = load_post_history()
-    
+
     if not should_process(state):
         return
-    
+
     print("")
-    
     print(f"   Platform: {platform}")
     print(f"   Stream ID: {stream_id}")
 
     stream_data = normalize_stream(platform, stream)
 
     print_section("📺 STREAM DATA")
-
     print(f"   Platform: {stream_data['platform']}")
     print(f"   Channel: {stream_data['channel']}")
     print(f"   Title: {stream_data['title']}")
@@ -564,19 +579,50 @@ def main():
     print(f"   Viewers: {stream_data['viewer_count']}")
     print(f"   URL: {stream_data['url']}")
 
-    
+    # --------------------------------------------------
+    # INSTAGRAM STORIES
+    # --------------------------------------------------
+
+    instagram_sent = False
+
+    try:
+        print_section("📸 INSTAGRAM STORY")
+
+        from src.instagram.config import load_config
+        from src.instagram.publisher import publish_story
+
+        instagram_config = load_config()
+
+        publish_story(
+            platform=platform,
+            config=instagram_config
+        )
+
+        if not instagram_config["dry_run"]:
+            instagram_sent = True
+            print("✅ Instagram Story published.")
+        else:
+            print(
+                "ℹ️ Instagram dry-run completed. "
+                "Nothing was published."
+            )
+
+    except Exception as e:
+        print(f"❌ Instagram failed: {e}")
 
     # --------------------------------------------------
     # DISCORD
     # --------------------------------------------------
-    
+
+    print_section("💬 DISCORD")
+
     print("🤖 Generating Discord message with Gemini...")
-    
+
     discord_messages = [
         item["message"]
         for item in post_history.get("discord", [])
     ]
-    
+
     discord_message = generate_discord_message(
         stream_data,
         stream_data["title"],
@@ -591,17 +637,22 @@ def main():
 
     discord_sent = False
     x_sent = False
-    
+
     try:
         send_to_discord(discord_message)
+
         discord_sent = True
+
         save_last_message(state, discord_message)
+
         add_post_to_history(
             post_history,
             "discord",
             discord_message
         )
+
         print("✅ Discord message sent.")
+
     except Exception as e:
         discord_sent = False
         print(f"❌ Discord failed: {e}")
@@ -610,7 +661,10 @@ def main():
     # X
     # --------------------------------------------------
 
+    print_section("🐦 X")
+
     print("🤖 Generating X message with Gemini...")
+
     x_posts = [
         item["message"]
         for item in post_history.get("x", [])
@@ -629,28 +683,34 @@ def main():
     print("")
 
     is_valid, validation_message = validate_x_message(
-            x_message,
-            stream_data["url"]
+        x_message,
+        stream_data["url"]
     )
-    
+
     print(f"🔎 X validation: {validation_message}")
-    
+
     if is_valid:
         print("🐦 Sending message to X via Buffer...")
-    
+
         try:
             send_to_buffer(x_message)
+
             x_sent = True
+
             save_last_post(state, x_message)
+
             add_post_to_history(
                 post_history,
                 "x",
                 x_message
             )
+
             print("✅ X message sent.")
+
         except Exception as e:
             x_sent = False
             print(f"❌ X failed: {e}")
+
     else:
         x_sent = False
         print("❌ X message rejected. It will NOT be published.")
@@ -663,11 +723,18 @@ def main():
         "platform": platform,
         "stream_id": stream_id,
         "processed_at": datetime.now(timezone.utc).isoformat(),
+        "instagram_sent": instagram_sent,
         "discord_sent": discord_sent,
         "x_sent": x_sent
     }
 
     save_state(state)
+
+    print_section("📊 FINAL RESULT")
+    print(f"   Platform: {platform}")
+    print(f"   Instagram: {'✅ Sent' if instagram_sent else '❌ Not sent'}")
+    print(f"   Discord: {'✅ Sent' if discord_sent else '❌ Not sent'}")
+    print(f"   X: {'✅ Sent' if x_sent else '❌ Not sent'}")
 
     print("✅ Stream event saved.")
 
