@@ -1,3 +1,4 @@
+
 name: Check Twitch Stream
 
 on:
@@ -20,7 +21,20 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install requests
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+          pip install -r src/instagram/requirements.txt
+
+      - name: Install MoviePy dependencies
+        run: |
+          pip install --no-deps "moviepy==2.2.1"
+          pip install decorator imageio imageio_ffmpeg proglog python-dotenv numpy
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
 
       - name: Run stream checker
         env:
@@ -31,6 +45,7 @@ jobs:
           BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
           KICK_CLIENT_ID: ${{ secrets.KICK_CLIENT_ID }}
           KICK_CLIENT_SECRET: ${{ secrets.KICK_CLIENT_SECRET }}
+          IG_SESSIONID: ${{ secrets.IG_SESSIONID }}
         run: python check_stream.py
 
       - name: Save stream state
