@@ -1,3 +1,7 @@
-# Instagram credentials and session
+# Instagram session and credentials
 /instagram_session.json
 *.session
+
+# Python cache
+__pycache__/
+*.py[cod]
