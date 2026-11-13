@@ -1,2 +1,1 @@
 instagrapi[video]==3.2.11
-moviepy==2.2.1
