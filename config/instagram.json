@@ -1,0 +1,12 @@
+
+{
+    "dry_run": true,
+    "session_file": "instagram_session.json",
+    "supported_images": [
+        ".jpg",
+        ".jpeg"
+    ],
+    "supported_videos": [
+        ".mp4"
+    ]
+}
