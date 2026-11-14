@@ -1,4 +1,3 @@
-
 import os
 import json
 from datetime import datetime, timezone, timedelta
@@ -8,13 +7,13 @@ import requests
 
 TWITCH_CLIENT_ID = os.environ["TWITCH_CLIENT_ID"]
 TWITCH_CLIENT_SECRET = os.environ["TWITCH_CLIENT_SECRET"]
-GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
-DISCORD_WEBHOOK_URL = os.environ["DISCORD_WEBHOOK_URL"]
-BUFFER_API_KEY = os.environ["BUFFER_API_KEY"]
-
-BUFFER_CHANNEL_ID = "6a987c1f065799be4676bb2a"
 KICK_CLIENT_ID = os.environ["KICK_CLIENT_ID"]
 KICK_CLIENT_SECRET = os.environ["KICK_CLIENT_SECRET"]
+
+# Las credenciales de publicación son opcionales mientras el canal
+# correspondiente esté deshabilitado en config/notifier.json.
+BUFFER_CHANNEL_ID = "6a987c1f065799be4676bb2a"
+NOTIFIER_CONFIG_FILE = "config/notifier.json"
 TWITCH_CHANNEL_NAME = "CalaveraGamingTV"
 KICK_CHANNEL_SLUG = "CalaveraGamingTV"
 
@@ -24,6 +23,47 @@ COOLDOWN_HOURS = 14
 GEMINI_MODEL = "gemini-3.5-flash-lite"
 POST_HISTORY_FILE = "data/post_history.json"
 HISTORY_DAYS = 7
+
+
+def require_env(name):
+    value = os.getenv(name)
+
+    if not value:
+        raise RuntimeError(
+            f"Missing required GitHub Actions secret/environment variable: {name}"
+        )
+
+    return value
+
+
+def load_notifier_config():
+    if not os.path.isfile(NOTIFIER_CONFIG_FILE):
+        raise FileNotFoundError(
+            f"Notifier configuration not found: {NOTIFIER_CONFIG_FILE}"
+        )
+
+    with open(NOTIFIER_CONFIG_FILE, "r", encoding="utf-8") as file:
+        config = json.load(file)
+
+    publishing = config.get("publishing")
+
+    if not isinstance(publishing, dict):
+        raise ValueError(
+            "Invalid notifier config: expected an object named 'publishing'."
+        )
+
+    for channel in ("discord", "x", "instagram"):
+        if channel not in publishing:
+            raise ValueError(
+                f"Invalid notifier config: missing publishing.{channel}."
+            )
+
+        if not isinstance(publishing[channel], bool):
+            raise ValueError(
+                f"Invalid notifier config: publishing.{channel} must be true or false."
+            )
+
+    return publishing
 
 
 def get_twitch_token():
@@ -297,7 +337,7 @@ def generate_discord_message(stream_data, context, last_messages):
     response = requests.post(
         f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
         headers={
-            "x-goog-api-key": GEMINI_API_KEY,
+            "x-goog-api-key": require_env("GEMINI_API_KEY"),
             "Content-Type": "application/json",
         },
         json={
@@ -349,7 +389,7 @@ def generate_x_message(stream_data, context, last_posts):
     response = requests.post(
         f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
         headers={
-            "x-goog-api-key": GEMINI_API_KEY,
+            "x-goog-api-key": require_env("GEMINI_API_KEY"),
             "Content-Type": "application/json",
         },
         json={
@@ -375,7 +415,7 @@ def generate_x_message(stream_data, context, last_posts):
 
 def send_to_discord(message):
     response = requests.post(
-        DISCORD_WEBHOOK_URL,
+        require_env("DISCORD_WEBHOOK_URL"),
         json={
             "content": message
         },
@@ -407,7 +447,7 @@ def send_to_buffer(message):
         "https://api.buffer.com",
         headers={
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {BUFFER_API_KEY}",
+            "Authorization": f"Bearer {require_env('BUFFER_API_KEY')}",
         },
         json={
             "query": query,
@@ -467,26 +507,33 @@ def print_section(title):
 
 
 def main():
-
     print_section("🎬 CALAVERA STREAM NOTIFIER")
+
+    try:
+        publishing = load_notifier_config()
+    except Exception as e:
+        print(f"❌ Could not load notifier configuration: {e}")
+        return
+
+    print("📣 PUBLISHING CONFIGURATION")
+    print(f"   Discord:   {'ENABLED' if publishing['discord'] else 'DISABLED'}")
+    print(f"   X:         {'ENABLED' if publishing['x'] else 'DISABLED'}")
+    print(f"   Instagram: {'ENABLED' if publishing['instagram'] else 'DISABLED'}")
     print(f"📡 Checking Twitch channel: {TWITCH_CHANNEL_NAME}")
 
     twitch_stream = None
     kick_stream = None
-
     twitch_error = None
     kick_error = None
 
     print_section("📡 CHECKING PLATFORMS")
 
-    # TWITCH
     try:
         twitch_token = get_twitch_token()
         twitch_stream = get_stream_info(twitch_token)
     except Exception as e:
         twitch_error = str(e)
 
-    # KICK
     try:
         kick_token = get_kick_token()
         kick_stream = get_kick_stream_info(kick_token)
@@ -542,7 +589,6 @@ def main():
         platform = "twitch"
         stream = twitch_stream
         stream_id = twitch_stream["id"]
-
     elif kick_stream:
         platform = "kick"
         stream = kick_stream
@@ -550,12 +596,10 @@ def main():
             f"kick-{kick_stream['broadcaster_user_id']}-"
             f"{kick_stream['stream']['start_time']}"
         )
-
     else:
         return
 
     print_section("🎯 STREAM SELECTED")
-
     print(f"   Platform: {platform}")
     print(f"   Stream ID: {stream_id}")
 
@@ -579,146 +623,123 @@ def main():
     print(f"   Viewers: {stream_data['viewer_count']}")
     print(f"   URL: {stream_data['url']}")
 
+    instagram_sent = False
+    discord_sent = False
+    x_sent = False
+
     # --------------------------------------------------
     # INSTAGRAM STORIES
     # --------------------------------------------------
-
-    instagram_sent = False
-
-    try:
+    if publishing["instagram"]:
         print_section("📸 INSTAGRAM STORY")
+        try:
+            from src.instagram.config import load_config
+            from src.instagram.publisher import publish_story
 
-        from src.instagram.config import load_config
-        from src.instagram.publisher import publish_story
+            instagram_config = load_config()
+            publish_story(platform=platform, config=instagram_config)
 
-        instagram_config = load_config()
-
-        publish_story(
-            platform=platform,
-            config=instagram_config
-        )
-
-        if not instagram_config["dry_run"]:
-            instagram_sent = True
-            print("✅ Instagram Story published.")
-        else:
-            print(
-                "ℹ️ Instagram dry-run completed. "
-                "Nothing was published."
-            )
-
-    except Exception as e:
-        print(f"❌ Instagram failed: {e}")
+            if instagram_config["dry_run"]:
+                print("ℹ️ Instagram dry-run completed. Nothing was published.")
+            else:
+                instagram_sent = True
+                print("✅ Instagram Story published.")
+        except Exception as e:
+            print(f"❌ Instagram failed: {e}")
+    else:
+        print_section("📸 INSTAGRAM STORY")
+        print("⏭️ Instagram disabled in config/notifier.json. Skipping.")
 
     # --------------------------------------------------
     # DISCORD
     # --------------------------------------------------
+    if publishing["discord"]:
+        print_section("💬 DISCORD")
+        try:
+            print("🤖 Generating Discord message with Gemini...")
 
-    print_section("💬 DISCORD")
+            discord_messages = [
+                item["message"]
+                for item in post_history.get("discord", [])
+            ]
 
-    print("🤖 Generating Discord message with Gemini...")
+            discord_message = generate_discord_message(
+                stream_data,
+                stream_data["title"],
+                discord_messages
+            )
 
-    discord_messages = [
-        item["message"]
-        for item in post_history.get("discord", [])
-    ]
+            print("")
+            print("===== DISCORD MESSAGE =====")
+            print(discord_message)
+            print("===========================")
+            print("")
 
-    discord_message = generate_discord_message(
-        stream_data,
-        stream_data["title"],
-        discord_messages
-    )
+            send_to_discord(discord_message)
+            discord_sent = True
 
-    print("")
-    print("===== DISCORD MESSAGE =====")
-    print(discord_message)
-    print("===========================")
-    print("")
+            save_last_message(state, discord_message)
+            add_post_to_history(post_history, "discord", discord_message)
 
-    discord_sent = False
-    x_sent = False
-
-    try:
-        send_to_discord(discord_message)
-
-        discord_sent = True
-
-        save_last_message(state, discord_message)
-
-        add_post_to_history(
-            post_history,
-            "discord",
-            discord_message
-        )
-
-        print("✅ Discord message sent.")
-
-    except Exception as e:
-        discord_sent = False
-        print(f"❌ Discord failed: {e}")
+            print("✅ Discord message sent.")
+        except Exception as e:
+            print(f"❌ Discord failed: {e}")
+    else:
+        print_section("💬 DISCORD")
+        print("⏭️ Discord disabled in config/notifier.json. Skipping.")
 
     # --------------------------------------------------
     # X
     # --------------------------------------------------
-
-    print_section("🐦 X")
-
-    print("🤖 Generating X message with Gemini...")
-
-    x_posts = [
-        item["message"]
-        for item in post_history.get("x", [])
-    ]
-
-    x_message = generate_x_message(
-        stream_data,
-        stream_data["title"],
-        x_posts
-    )
-
-    print("")
-    print("===== X MESSAGE =====")
-    print(x_message)
-    print("=====================")
-    print("")
-
-    is_valid, validation_message = validate_x_message(
-        x_message,
-        stream_data["url"]
-    )
-
-    print(f"🔎 X validation: {validation_message}")
-
-    if is_valid:
-        print("🐦 Sending message to X via Buffer...")
-
+    if publishing["x"]:
+        print_section("🐦 X")
         try:
-            send_to_buffer(x_message)
+            print("🤖 Generating X message with Gemini...")
 
-            x_sent = True
+            x_posts = [
+                item["message"]
+                for item in post_history.get("x", [])
+            ]
 
-            save_last_post(state, x_message)
-
-            add_post_to_history(
-                post_history,
-                "x",
-                x_message
+            x_message = generate_x_message(
+                stream_data,
+                stream_data["title"],
+                x_posts
             )
 
-            print("✅ X message sent.")
+            print("")
+            print("===== X MESSAGE =====")
+            print(x_message)
+            print("=====================")
+            print("")
 
+            is_valid, validation_message = validate_x_message(
+                x_message,
+                stream_data["url"]
+            )
+
+            print(f"🔎 X validation: {validation_message}")
+
+            if is_valid:
+                print("🐦 Sending message to X via Buffer...")
+                send_to_buffer(x_message)
+
+                x_sent = True
+                save_last_post(state, x_message)
+                add_post_to_history(post_history, "x", x_message)
+
+                print("✅ X message sent.")
+            else:
+                print("❌ X message rejected. It will NOT be published.")
         except Exception as e:
-            x_sent = False
             print(f"❌ X failed: {e}")
-
     else:
-        x_sent = False
-        print("❌ X message rejected. It will NOT be published.")
+        print_section("🐦 X")
+        print("⏭️ X disabled in config/notifier.json. Skipping.")
 
     # --------------------------------------------------
     # SAVE STATE
     # --------------------------------------------------
-
     state["last_event"] = {
         "platform": platform,
         "stream_id": stream_id,
@@ -732,9 +753,9 @@ def main():
 
     print_section("📊 FINAL RESULT")
     print(f"   Platform: {platform}")
-    print(f"   Instagram: {'✅ Sent' if instagram_sent else '❌ Not sent'}")
-    print(f"   Discord: {'✅ Sent' if discord_sent else '❌ Not sent'}")
-    print(f"   X: {'✅ Sent' if x_sent else '❌ Not sent'}")
+    print(f"   Instagram: {'✅ Sent' if instagram_sent else ('⏭️ Disabled' if not publishing['instagram'] else '❌ Not sent')}")
+    print(f"   Discord: {'✅ Sent' if discord_sent else ('⏭️ Disabled' if not publishing['discord'] else '❌ Not sent')}")
+    print(f"   X: {'✅ Sent' if x_sent else ('⏭️ Disabled' if not publishing['x'] else '❌ Not sent')}")
 
     print("✅ Stream event saved.")
 
