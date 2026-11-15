@@ -1,8 +1,11 @@
+
 import os
 import json
 from datetime import datetime, timezone, timedelta
 
 import requests
+
+from src.notifier_summary import finalize_summary
 
 
 TWITCH_CLIENT_ID = os.environ["TWITCH_CLIENT_ID"]
@@ -509,16 +512,74 @@ def print_section(title):
 def main():
     print_section("🎬 CALAVERA STREAM NOTIFIER")
 
+    execution = {
+        "status": "STARTED",
+        "reason": "Execution started"
+    }
+
+    services = {
+        "twitch": {"status": "NOT_CHECKED"},
+        "kick": {"status": "NOT_CHECKED"},
+        "gemini": {"status": "NOT_CHECKED"},
+        "discord_webhook": {"status": "NOT_CHECKED"},
+        "buffer_x": {"status": "NOT_CHECKED"},
+        "instagram": {"status": "NOT_CHECKED"}
+    }
+
+    stream_summary = {
+        "status": "UNKNOWN",
+        "platform": None,
+        "channel": None,
+        "game": None,
+        "viewers": 0,
+        "stream_id": None,
+        "url": None,
+        "title": None
+    }
+
+    publications = {
+        "discord": {"status": "NOT_ATTEMPTED", "message": None},
+        "x": {"status": "NOT_ATTEMPTED", "message": None},
+        "instagram": {"status": "NOT_ATTEMPTED", "message": None}
+    }
+
+    errors = []
+
+    def finish():
+        summary_data = {
+            "execution": execution,
+            "services": services,
+            "stream": stream_summary,
+            "publications": publications,
+            "errors": errors
+        }
+
+        try:
+            finalize_summary(summary_data)
+        except Exception as summary_error:
+            print(
+                f"[SUMMARY] Could not generate execution summary: "
+                f"{summary_error}"
+            )
+
     try:
         publishing = load_notifier_config()
+
     except Exception as e:
+        execution["status"] = "FAILED"
+        execution["reason"] = "Could not load publishing configuration"
+        errors.append(f"Notifier configuration: {e}")
+
         print(f"❌ Could not load notifier configuration: {e}")
+
+        finish()
         return
 
     print("📣 PUBLISHING CONFIGURATION")
     print(f"   Discord:   {'ENABLED' if publishing['discord'] else 'DISABLED'}")
     print(f"   X:         {'ENABLED' if publishing['x'] else 'DISABLED'}")
     print(f"   Instagram: {'ENABLED' if publishing['instagram'] else 'DISABLED'}")
+
     print(f"📡 Checking Twitch channel: {TWITCH_CHANNEL_NAME}")
 
     twitch_stream = None
@@ -531,57 +592,129 @@ def main():
     try:
         twitch_token = get_twitch_token()
         twitch_stream = get_stream_info(twitch_token)
+
+        services["twitch"] = {
+            "status": "OK",
+            "detail": "API request successful"
+        }
+
     except Exception as e:
         twitch_error = str(e)
+
+        services["twitch"] = {
+            "status": "API_ERROR",
+            "detail": twitch_error
+        }
+
+        errors.append(f"Twitch API: {twitch_error}")
 
     try:
         kick_token = get_kick_token()
         kick_stream = get_kick_stream_info(kick_token)
+
+        services["kick"] = {
+            "status": "OK",
+            "detail": "API request successful"
+        }
+
     except Exception as e:
         kick_error = str(e)
+
+        services["kick"] = {
+            "status": "API_ERROR",
+            "detail": kick_error
+        }
+
+        errors.append(f"Kick API: {kick_error}")
 
     print("")
 
     if twitch_error:
         print("   Twitch: ⚠️ API ERROR")
         print(f"   └─ {twitch_error}")
+
     elif twitch_stream:
         print("   Twitch: 🟢 ONLINE")
         print(f"   ├─ Stream ID: {twitch_stream['id']}")
         print(f"   ├─ Title: {twitch_stream['title']}")
         print(f"   └─ Viewers: {twitch_stream['viewer_count']}")
+
     else:
         print("   Twitch: 🔴 OFFLINE")
 
     if kick_error:
         print("   Kick:   ⚠️ API ERROR")
         print(f"   └─ {kick_error}")
+
     elif kick_stream:
         print("   Kick:   🟢 ONLINE")
         print(f"   ├─ Broadcaster ID: {kick_stream['broadcaster_user_id']}")
         print(f"   ├─ Title: {kick_stream['stream_title']}")
         print(f"   └─ Viewers: {kick_stream['stream']['viewer_count']}")
+
     else:
         print("   Kick:   🔴 OFFLINE")
 
-    if twitch_stream is None and kick_stream is None:
-        if twitch_error and kick_error:
-            print_section("📊 RESULT")
-            print("   ❌ Twitch and Kick API errors.")
-            return
+    # --------------------------------------------------
+    # NO ACTIVE STREAM
+    # --------------------------------------------------
+    # Si ambas APIs respondieron y ambos canales están offline,
+    # se termina sin Gemini ni publicaciones.
+    #
+    # Si alguna API falló y no hay otro stream online,
+    # tampoco publicamos: no podemos confirmar que haya un directo.
+    # --------------------------------------------------
 
-        if twitch_error:
-            print_section("📊 RESULT")
-            print("   ⚠️ Twitch API error. Kick is offline.")
-            return
+    if not twitch_stream and not kick_stream:
 
-        if kick_error:
-            print_section("📊 RESULT")
-            print("   ⚠️ Kick API error. Twitch is offline.")
-            return
+        if twitch_error or kick_error:
+            execution["status"] = "INCOMPLETE"
+            execution["reason"] = (
+                "Could not confirm an active stream because "
+                "at least one platform API failed"
+            )
 
-        print_section("📊 RESULT")
-        print("   😴 No active stream found.")
+            stream_summary["status"] = "UNKNOWN"
+
+            for name in ("discord", "x", "instagram"):
+                publications[name] = {
+                    "status": "NOT_PUBLISHED",
+                    "message": None,
+                    "detail": (
+                        "No stream was confirmed; "
+                        "publishing was not attempted"
+                    )
+                }
+
+            print_section("📊 RESULT")
+            print(
+                "   ⚠️ No confirmed active stream. "
+                "Nothing will be published."
+            )
+
+        else:
+            execution["status"] = "SUCCESS"
+            execution["reason"] = (
+                "Twitch and Kick are offline; "
+                "no publication attempted"
+            )
+
+            stream_summary["status"] = "OFFLINE"
+
+            for name in ("discord", "x", "instagram"):
+                publications[name] = {
+                    "status": "SKIPPED",
+                    "message": None,
+                    "detail": "No active stream"
+                }
+
+            print_section("📊 RESULT")
+            print(
+                "   😴 No active stream found. "
+                "No messages generated or published."
+            )
+
+        finish()
         return
 
     # Twitch mantiene prioridad cuando ambas plataformas están online.
@@ -589,15 +722,15 @@ def main():
         platform = "twitch"
         stream = twitch_stream
         stream_id = twitch_stream["id"]
-    elif kick_stream:
+
+    else:
         platform = "kick"
         stream = kick_stream
+
         stream_id = (
             f"kick-{kick_stream['broadcaster_user_id']}-"
             f"{kick_stream['stream']['start_time']}"
         )
-    else:
-        return
 
     print_section("🎯 STREAM SELECTED")
     print(f"   Platform: {platform}")
@@ -606,14 +739,54 @@ def main():
     state = load_state()
     post_history = load_post_history()
 
-    if not should_process(state):
+    stream_data = normalize_stream(platform, stream)
+
+    stream_summary.update({
+        "status": "ONLINE",
+        "platform": stream_data["platform"],
+        "channel": stream_data["channel"],
+        "game": stream_data["game"],
+        "viewers": stream_data["viewer_count"],
+        "stream_id": stream_data["stream_id"],
+        "url": stream_data["url"],
+        "title": stream_data["title"]
+    })
+
+    # --------------------------------------------------
+    # DUPLICATE EVENT
+    # --------------------------------------------------
+
+    if already_processed(state, platform, stream_id):
+        execution["status"] = "SUCCESS"
+        execution["reason"] = "This stream event was already processed"
+
+        for name in publications:
+            publications[name] = {
+                "status": "SKIPPED",
+                "message": None,
+                "detail": "Stream event already processed"
+            }
+
+        finish()
         return
 
-    print("")
-    print(f"   Platform: {platform}")
-    print(f"   Stream ID: {stream_id}")
+    # --------------------------------------------------
+    # COOLDOWN
+    # --------------------------------------------------
 
-    stream_data = normalize_stream(platform, stream)
+    if not should_process(state):
+        execution["status"] = "SUCCESS"
+        execution["reason"] = f"{COOLDOWN_HOURS}-hour cooldown active"
+
+        for name in publications:
+            publications[name] = {
+                "status": "SKIPPED",
+                "message": None,
+                "detail": f"Cooldown of {COOLDOWN_HOURS} hours is active"
+            }
+
+        finish()
+        return
 
     print_section("📺 STREAM DATA")
     print(f"   Platform: {stream_data['platform']}")
@@ -623,38 +796,101 @@ def main():
     print(f"   Viewers: {stream_data['viewer_count']}")
     print(f"   URL: {stream_data['url']}")
 
-    instagram_sent = False
-    discord_sent = False
-    x_sent = False
+    gemini_successes = 0
+    gemini_failures = []
 
     # --------------------------------------------------
     # INSTAGRAM STORIES
     # --------------------------------------------------
+
     if publishing["instagram"]:
         print_section("📸 INSTAGRAM STORY")
+
         try:
             from src.instagram.config import load_config
             from src.instagram.publisher import publish_story
 
             instagram_config = load_config()
-            publish_story(platform=platform, config=instagram_config)
+
+            publish_story(
+                platform=platform,
+                config=instagram_config
+            )
 
             if instagram_config["dry_run"]:
-                print("ℹ️ Instagram dry-run completed. Nothing was published.")
+                publications["instagram"] = {
+                    "status": "DRY_RUN",
+                    "message": None,
+                    "detail": (
+                        "Validation completed; "
+                        "no Story published"
+                    )
+                }
+
+                services["instagram"] = {
+                    "status": "OK",
+                    "detail": "Dry-run validation successful"
+                }
+
+                print(
+                    "ℹ️ Instagram dry-run completed. "
+                    "Nothing was published."
+                )
+
             else:
-                instagram_sent = True
+                publications["instagram"] = {
+                    "status": "PUBLISHED",
+                    "message": None,
+                    "detail": f"Story video for {platform}"
+                }
+
+                services["instagram"] = {
+                    "status": "OK",
+                    "detail": "Story upload completed"
+                }
+
                 print("✅ Instagram Story published.")
+
         except Exception as e:
+            publications["instagram"] = {
+                "status": "FAILED",
+                "message": None,
+                "detail": str(e)
+            }
+
+            services["instagram"] = {
+                "status": "ERROR",
+                "detail": str(e)
+            }
+
+            errors.append(f"Instagram: {e}")
+
             print(f"❌ Instagram failed: {e}")
+
     else:
+        publications["instagram"] = {
+            "status": "DISABLED",
+            "message": None,
+            "detail": "Disabled in config/notifier.json"
+        }
+
+        services["instagram"] = {
+            "status": "DISABLED"
+        }
+
         print_section("📸 INSTAGRAM STORY")
-        print("⏭️ Instagram disabled in config/notifier.json. Skipping.")
+        print(
+            "⏭️ Instagram disabled in config/notifier.json. "
+            "Skipping."
+        )
 
     # --------------------------------------------------
     # DISCORD
     # --------------------------------------------------
+
     if publishing["discord"]:
         print_section("💬 DISCORD")
+
         try:
             print("🤖 Generating Discord message with Gemini...")
 
@@ -669,30 +905,102 @@ def main():
                 discord_messages
             )
 
+            gemini_successes += 1
+
+            publications["discord"]["message"] = discord_message
+
             print("")
             print("===== DISCORD MESSAGE =====")
             print(discord_message)
             print("===========================")
             print("")
 
-            send_to_discord(discord_message)
-            discord_sent = True
+            try:
+                send_to_discord(discord_message)
 
-            save_last_message(state, discord_message)
-            add_post_to_history(post_history, "discord", discord_message)
+                publications["discord"].update({
+                    "status": "PUBLISHED",
+                    "detail": "Successfully sent to Discord webhook"
+                })
 
-            print("✅ Discord message sent.")
+                services["discord_webhook"] = {
+                    "status": "OK",
+                    "detail": "Webhook accepted the message"
+                }
+
+                try:
+                    save_last_message(state, discord_message)
+
+                    add_post_to_history(
+                        post_history,
+                        "discord",
+                        discord_message
+                    )
+
+                except Exception as history_error:
+                    errors.append(
+                        f"Discord history update: {history_error}"
+                    )
+
+                    print(
+                        "⚠️ Discord was published, but history "
+                        f"could not be updated: {history_error}"
+                    )
+
+                print("✅ Discord message sent.")
+
+            except Exception as e:
+                publications["discord"].update({
+                    "status": "FAILED",
+                    "detail": str(e)
+                })
+
+                services["discord_webhook"] = {
+                    "status": "ERROR",
+                    "detail": str(e)
+                }
+
+                errors.append(f"Discord webhook: {e}")
+
+                print(f"❌ Discord publishing failed: {e}")
+
         except Exception as e:
-            print(f"❌ Discord failed: {e}")
+            publications["discord"] = {
+                "status": "FAILED",
+                "message": None,
+                "detail": f"Message generation failed: {e}"
+            }
+
+            gemini_failures.append(
+                f"Discord message generation: {e}"
+            )
+
+            print(f"❌ Discord message generation failed: {e}")
+
     else:
+        publications["discord"] = {
+            "status": "DISABLED",
+            "message": None,
+            "detail": "Disabled in config/notifier.json"
+        }
+
+        services["discord_webhook"] = {
+            "status": "DISABLED"
+        }
+
         print_section("💬 DISCORD")
-        print("⏭️ Discord disabled in config/notifier.json. Skipping.")
+        print(
+            "⏭️ Discord disabled in config/notifier.json. "
+            "Skipping."
+        )
 
     # --------------------------------------------------
-    # X
+    # X (VIA BUFFER)
     # --------------------------------------------------
+
     if publishing["x"]:
         print_section("🐦 X")
+
         try:
             print("🤖 Generating X message with Gemini...")
 
@@ -707,6 +1015,10 @@ def main():
                 x_posts
             )
 
+            gemini_successes += 1
+
+            publications["x"]["message"] = x_message
+
             print("")
             print("===== X MESSAGE =====")
             print(x_message)
@@ -720,44 +1032,205 @@ def main():
 
             print(f"🔎 X validation: {validation_message}")
 
-            if is_valid:
-                print("🐦 Sending message to X via Buffer...")
-                send_to_buffer(x_message)
+            if not is_valid:
+                publications["x"].update({
+                    "status": "REJECTED",
+                    "detail": validation_message
+                })
 
-                x_sent = True
-                save_last_post(state, x_message)
-                add_post_to_history(post_history, "x", x_message)
+                services["buffer_x"] = {
+                    "status": "NOT_CALLED",
+                    "detail": "Message rejected by validation"
+                }
 
-                print("✅ X message sent.")
+                print(
+                    "❌ X message rejected. "
+                    "It will NOT be published."
+                )
+
             else:
-                print("❌ X message rejected. It will NOT be published.")
+                try:
+                    print("🐦 Sending message to X via Buffer...")
+
+                    send_to_buffer(x_message)
+
+                    publications["x"].update({
+                        "status": "PUBLISHED",
+                        "detail": "Successfully sent through Buffer"
+                    })
+
+                    services["buffer_x"] = {
+                        "status": "OK",
+                        "detail": "Buffer accepted the post"
+                    }
+
+                    try:
+                        save_last_post(state, x_message)
+
+                        add_post_to_history(
+                            post_history,
+                            "x",
+                            x_message
+                        )
+
+                    except Exception as history_error:
+                        errors.append(
+                            f"X history update: {history_error}"
+                        )
+
+                        print(
+                            "⚠️ X was published, but history "
+                            f"could not be updated: {history_error}"
+                        )
+
+                    print("✅ X message sent.")
+
+                except Exception as e:
+                    publications["x"].update({
+                        "status": "FAILED",
+                        "detail": str(e)
+                    })
+
+                    services["buffer_x"] = {
+                        "status": "ERROR",
+                        "detail": str(e)
+                    }
+
+                    errors.append(f"X via Buffer: {e}")
+
+                    print(f"❌ X publishing failed: {e}")
+
         except Exception as e:
-            print(f"❌ X failed: {e}")
+            publications["x"] = {
+                "status": "FAILED",
+                "message": None,
+                "detail": f"Message generation failed: {e}"
+            }
+
+            gemini_failures.append(
+                f"X message generation: {e}"
+            )
+
+            print(f"❌ X message generation failed: {e}")
+
     else:
+        publications["x"] = {
+            "status": "DISABLED",
+            "message": None,
+            "detail": "Disabled in config/notifier.json"
+        }
+
+        services["buffer_x"] = {
+            "status": "DISABLED"
+        }
+
         print_section("🐦 X")
-        print("⏭️ X disabled in config/notifier.json. Skipping.")
+        print(
+            "⏭️ X disabled in config/notifier.json. "
+            "Skipping."
+        )
+
+    # --------------------------------------------------
+    # GEMINI SERVICE STATUS
+    # --------------------------------------------------
+
+    if gemini_successes and gemini_failures:
+        services["gemini"] = {
+            "status": "PARTIAL",
+            "detail": (
+                f"{gemini_successes} generation(s) succeeded; "
+                + "; ".join(gemini_failures)
+            )
+        }
+
+    elif gemini_successes:
+        services["gemini"] = {
+            "status": "OK",
+            "detail": (
+                f"{gemini_successes} message(s) generated successfully"
+            )
+        }
+
+    elif gemini_failures:
+        services["gemini"] = {
+            "status": "ERROR",
+            "detail": "; ".join(gemini_failures)
+        }
+
+    else:
+        services["gemini"] = {
+            "status": "NOT_USED"
+        }
+
+    errors.extend(gemini_failures)
 
     # --------------------------------------------------
     # SAVE STATE
     # --------------------------------------------------
+
     state["last_event"] = {
         "platform": platform,
         "stream_id": stream_id,
         "processed_at": datetime.now(timezone.utc).isoformat(),
-        "instagram_sent": instagram_sent,
-        "discord_sent": discord_sent,
-        "x_sent": x_sent
+        "instagram_sent": (
+            publications["instagram"]["status"] == "PUBLISHED"
+        ),
+        "discord_sent": (
+            publications["discord"]["status"] == "PUBLISHED"
+        ),
+        "x_sent": (
+            publications["x"]["status"] == "PUBLISHED"
+        )
     }
 
-    save_state(state)
+    try:
+        save_state(state)
+
+    except Exception as e:
+        errors.append(f"Saving stream state: {e}")
+
+        execution["status"] = "PARTIAL"
+        execution["reason"] = (
+            "Stream processed, but state could not be saved"
+        )
+
+    published_count = sum(
+        1 for item in publications.values()
+        if item.get("status") == "PUBLISHED"
+    )
+
+    failed_count = sum(
+        1 for item in publications.values()
+        if item.get("status") == "FAILED"
+    )
+
+    if execution["status"] != "PARTIAL":
+
+        if failed_count or errors:
+            execution["status"] = "PARTIAL"
+
+            execution["reason"] = (
+                f"Stream processed; {published_count} publication(s) "
+                f"sent and {failed_count} publication(s) failed"
+            )
+
+        else:
+            execution["status"] = "SUCCESS"
+
+            execution["reason"] = (
+                f"Stream processed; {published_count} publication(s) sent"
+            )
 
     print_section("📊 FINAL RESULT")
-    print(f"   Platform: {platform}")
-    print(f"   Instagram: {'✅ Sent' if instagram_sent else ('⏭️ Disabled' if not publishing['instagram'] else '❌ Not sent')}")
-    print(f"   Discord: {'✅ Sent' if discord_sent else ('⏭️ Disabled' if not publishing['discord'] else '❌ Not sent')}")
-    print(f"   X: {'✅ Sent' if x_sent else ('⏭️ Disabled' if not publishing['x'] else '❌ Not sent')}")
 
-    print("✅ Stream event saved.")
+    print(f"   Platform: {platform}")
+
+    for name, result in publications.items():
+        print(f"   {name.capitalize()}: {result['status']}")
+
+    print("✅ Stream event processing finished.")
+
+    finish()
 
 
 if __name__ == "__main__":
