@@ -1,10 +1,6 @@
 {
   "discord": [
     {
-      "message": "@everyone Perdimos hasta el último cimiento anoche, pero ya estamos adentro de nuevo tratando de armar algo antes de que nos vuelvan a borrar del mapa. Pásense por el chat a tirar alguna idea o a cagarse de risa un rato con el desastre. https://twitch.tv/CalaveraGamingTV 💀⛏️",
-      "posted_at": "2026-11-13T21:18:28.346713+00:00"
-    },
-    {
       "message": "@everyone ¿Sobrevivimos al día 2 o fue puro milagro? Arrancamos el directo con la base intacta y hay que ver cuánto nos dura la suerte antes de que vengan a borrarse. Pásense por el chat a tirar alguna idea o a sufrir un rato con nosotros. https://twitch.tv/CalaveraGamingTV 💀⛏️",
       "posted_at": "2026-11-14T21:50:25.578691+00:00"
     },
@@ -19,13 +15,13 @@
     {
       "message": "@everyone ¿Quién fue el genio que se le ocurrió meternos a jugar solos contra los clanes en pleno wipe sin bps? Arrancá a ver si aguantamos cinco minutos enteros o si nos raidean antes de prender el horno. Pásense por el chat a tirar alguna idea para no terminar en bolas en la playa hoy. https://twitch.tv/CalaveraGamingTV 💀⛏️",
       "posted_at": "2026-11-20T18:33:43.801741+00:00"
+    },
+    {
+      "message": "@everyone Día 3 contra los clanes y la base sigue firme de milagro, aunque no sé cuánto nos va a durar la suerte. Pásense a tirar alguna idea por el chat antes de que nos armen otro raid. https://twitch.tv/CalaveraGamingTV 💀⛏️",
+      "posted_at": "2026-11-21T21:19:49.241887+00:00"
     }
   ],
   "x": [
-    {
-      "message": "Nos raidearon y perdimos todo, pero ya mismo arrancamos de nuevo para arriba. 💀 #Rust https://twitch.tv/CalaveraGamingTV",
-      "posted_at": "2026-11-13T21:18:30.712925+00:00"
-    },
     {
       "message": "Arrancó este Rust Monday y la verdad que no tengo idea para dónde disparar todavía. A ver qué sale. 💀 #Rust https://twitch.tv/CalaveraGamingTV",
       "posted_at": "2026-11-16T20:05:56.986578+00:00"
@@ -37,6 +33,10 @@
     {
       "message": "Empezar wipe sin blueprints y meterme solo a pelearle bases a los clanes grandes es firmar mi sentencia de muerte, pero ya armé el primer arco. 💀 #Rust https://twitch.tv/CalaveraGamingTV",
       "posted_at": "2026-11-20T18:33:49.476914+00:00"
+    },
+    {
+      "message": "Tercer día de wipe y los clanes ya tienen media isla tapada de compuestos. Moverse por el mapa es un riesgo constante. 💀 #Rust https://twitch.tv/CalaveraGamingTV",
+      "posted_at": "2026-11-21T21:19:51.713766+00:00"
     }
   ]
 }
