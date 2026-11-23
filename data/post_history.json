@@ -1,10 +1,6 @@
 {
   "discord": [
     {
-      "message": "@everyone ¿Qué onda con este Rust monday? Arrancamos a ver qué sale, así que pasense por el chat a tirar alguna idea para ver si embocamos algo hoy o terminamos regalados. https://twitch.tv/CalaveraGamingTV 💀⛏️",
-      "posted_at": "2026-11-16T20:05:36.401499+00:00"
-    },
-    {
       "message": "@everyone Wipe fresco sin bps y nos metimos a dar pelea contra los clanes, a ver cuánto duramos antes de terminar en bolas en la playa. Pásense por el chat a tirar alguna idea o a sufrir un rato con el desastre. https://twitch.tv/CalaveraGamingTV 💀⛏️",
       "posted_at": "2026-11-19T20:08:56.605473+00:00"
     },
@@ -19,13 +15,13 @@
     {
       "message": "@everyone ¿Cómo sigue en pie esta base en el día 4 si jugamos solos contra todos los clanes? Pasense un ratito por el chat a ver cuánto aguantamos antes de que nos borren del mapa. https://twitch.tv/CalaveraGamingTV 💀⛏️",
       "posted_at": "2026-11-22T22:57:41.123568+00:00"
+    },
+    {
+      "message": "@everyone ¿En serio seguimos vivos después de comernos tantas perlones en el día 5 contra los clanes? Pasense por el chat a ver si podemos dar vuelta esta locura o si nos foguean de una vez. https://twitch.tv/CalaveraGamingTV 💀⛏️",
+      "posted_at": "2026-11-23T21:32:28.959903+00:00"
     }
   ],
   "x": [
-    {
-      "message": "Arrancó este Rust Monday y la verdad que no tengo idea para dónde disparar todavía. A ver qué sale. 💀 #Rust https://twitch.tv/CalaveraGamingTV",
-      "posted_at": "2026-11-16T20:05:56.986578+00:00"
-    },
     {
       "message": "Arrancar wipe sin blueprints y jugársela solo contra clanes enteros es una locura total, pero acá estamos intentando sobrevivir. 💀 #Rust https://twitch.tv/CalaveraGamingTV",
       "posted_at": "2026-11-19T20:08:59.370510+00:00"
@@ -37,6 +33,10 @@
     {
       "message": "Tercer día de wipe y los clanes ya tienen media isla tapada de compuestos. Moverse por el mapa es un riesgo constante. 💀 #Rust https://twitch.tv/CalaveraGamingTV",
       "posted_at": "2026-11-21T21:19:51.713766+00:00"
+    },
+    {
+      "message": "Día 5 contra clanes y venimos de llevarnos unos perlones hermosos. Si aguantamos esto, nos armamos hasta los dientes. 💀 #Rust https://twitch.tv/CalaveraGamingTV",
+      "posted_at": "2026-11-23T21:32:31.144636+00:00"
     }
   ]
 }
